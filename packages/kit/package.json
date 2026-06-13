@@ -1,0 +1,30 @@
+{
+	"name": "@haptiq/kit",
+	"version": "0.0.1",
+	"description": "A collection of scripts for Haptiq projects.",
+	"keywords": [
+		"build",
+		"tools",
+		"kit",
+		"haptiq"
+	],
+	"author": "Haptiq",
+	"license": "MIT",
+	"homepage": "...",
+	"repository": "...",
+	"main": "lib/index.js",
+	"bin": {
+		"kit": "./bin/haptiq.kit.js"
+	},
+	"dependencies": {
+		"commander": "^11.0.0"
+	},
+	"engines": {
+		"node": ">=20.0.0",
+		"npm": ">=10.8.0"
+	},
+	"files": [
+		"bin/",
+		"lib/"
+	]
+}

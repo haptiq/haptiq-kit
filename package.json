@@ -1,0 +1,27 @@
+{
+	"name": "@haptiq/toolkit",
+	"version": "0.0.1",
+	"description": "Unified toolkit for Haptiq projects",
+	"private": true,
+	"workspaces": [
+		"packages/*"
+	],
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [
+		"build",
+		"tools",
+		"toolkit",
+		"haptiq"
+	],
+	"author": "Haptiq",
+	"license": "MIT",
+	"devDependencies": {
+		"@changesets/cli": "^2.26.0"
+	},
+	"engines": {
+		"node": ">=20.0.0",
+		"npm": ">=10.8.0"
+	}
+}
