@@ -24,10 +24,11 @@ const program = new Command();
 
 
 /**
- * Load configuration from haptiq.config.js
+ * Load and validate configuration from haptiq.config.js
  * 
  * Attempts to load configuration from the current working directory.
  * Falls back to empty object if no config file exists.
+ * Validates config structure to prevent malicious configurations.
  * 
  * @param {boolean} verbose - Show info message when no config found
  * @returns {Object} Configuration object or empty object
@@ -35,12 +36,41 @@ const program = new Command();
 function loadConfig(verbose = false) {
 	try {
 		const configPath = path.join(process.cwd(), 'haptiq.config.js');
-		return require(configPath);
-	} catch (configError) {
-		if (verbose) {
-			console.log('ℹ️  No haptiq.config.js found, using defaults');
+		const config = require(configPath);
+		
+		// Validate config is a plain object
+		if (!config || typeof config !== 'object' || Array.isArray(config)) {
+			throw new Error('Configuration must export a plain object');
 		}
-		return {};
+		
+		// Validate css config structure if present
+		if (config.css) {
+			if (typeof config.css !== 'object' || Array.isArray(config.css)) {
+				throw new Error('css configuration must be an object');
+			}
+			
+			// Validate critical fields
+			if (config.css.src && typeof config.css.src !== 'string') {
+				throw new Error('css.src must be a string');
+			}
+			
+			if (config.css.dest && typeof config.css.dest !== 'string') {
+				throw new Error('css.dest must be a string');
+			}
+		}
+		
+		return config;
+	} catch (configError) {
+		// Don't expose internal file paths in error messages
+		if (configError.message.includes('Cannot find module')) {
+			if (verbose) {
+				console.log('ℹ️  No haptiq.config.js found, using defaults');
+			}
+			return {};
+		}
+		
+		// Re-throw validation errors but sanitize the message
+		throw new Error(`Configuration error: ${configError.message}`);
 	}
 }
 

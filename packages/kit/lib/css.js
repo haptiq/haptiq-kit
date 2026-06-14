@@ -42,6 +42,43 @@ async function buildCSS(config = {}, verbose = false) {
 			...config.css?.lightning
 		}
 	};
+
+	/*
+	 * Input Validation
+	 * Prevent malicious patterns and path traversal attacks
+	 */
+	const projectRoot = process.cwd();
+
+	// Validate source glob pattern to prevent path traversal
+	if (typeof cssConfig.src !== 'string' || cssConfig.src.includes('..')) {
+		throw new Error('Source pattern must not contain path traversal sequences (..)');
+	}
+	
+	// Block patterns targeting sensitive system files and directories
+	const dangerousPatterns = [
+		'/etc/**',
+		'/var/**', 
+		'/usr/**',
+		'/home/**',
+		'~/**',
+		'**/node_modules/**',
+		'**/.git/**',
+		'**/.env*'
+	];
+	
+	if (dangerousPatterns.some(pattern => cssConfig.src.includes(pattern))) {
+		throw new Error('Source pattern targets potentially sensitive files or directories');
+	}
+
+	// Ensure destination stays within project boundaries to prevent path traversal
+	const safeDest = path.resolve(projectRoot, cssConfig.dest);
+	
+	if (!safeDest.startsWith(projectRoot)) {
+		throw new Error(`Destination path "${cssConfig.dest}" must be within project directory`);
+	}
+	
+	// Update config with validated path
+	cssConfig.dest = path.relative(projectRoot, safeDest);
 	
 	if (verbose) {
 		console.log('🪄 CSS processing begins.');
@@ -51,6 +88,13 @@ async function buildCSS(config = {}, verbose = false) {
 	 * Find and categorize all CSS source files
 	 */
 	const allFiles = glob.sync(cssConfig.src, { cwd: process.cwd() });
+	
+	// Limit file count to prevent resource exhaustion
+	const MAX_FILES = 100;
+	if (allFiles.length > MAX_FILES) {
+		throw new Error(`Too many files found (${allFiles.length}). Maximum allowed: ${MAX_FILES}`);
+	}
+	
 	const scssFiles = allFiles.filter(f => f.endsWith('.scss'));
 	const sassFiles = allFiles.filter(f => f.endsWith('.sass'));
 	const cssFiles = allFiles.filter(f => f.endsWith('.css'));
@@ -98,6 +142,14 @@ async function buildCSS(config = {}, verbose = false) {
  */
 async function processSingleSassFile(file, cssConfig, verbose = false) {
 	try {
+		// Limit file size to prevent memory exhaustion during processing
+		const stats = fs.statSync(file);
+		const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+		
+		if (stats.size > MAX_FILE_SIZE) {
+			throw new Error(`File ${path.basename(file)} is too large (${Math.round(stats.size / 1024 / 1024)}MB). Maximum allowed: ${Math.round(MAX_FILE_SIZE / 1024 / 1024)}MB`);
+		}
+		
 		const sass = require('sass');
 		
 		/*
@@ -123,7 +175,10 @@ async function processSingleSassFile(file, cssConfig, verbose = false) {
 		} else if (error.code === 'MODULE_NOT_FOUND' && error.message.includes('lightningcss')) {
 			throw new Error('LightningCSS not found. Install with: npm install lightningcss');
 		}
-		throw new Error(`Sass compilation failed for ${file}: ${error.message}`);
+		
+		// Use basename to avoid exposing internal file paths in error messages
+		const fileName = path.basename(file);
+		throw new Error(`Sass compilation failed for ${fileName}: ${error.message}`);
 	}
 }
 
@@ -138,6 +193,14 @@ async function processSingleSassFile(file, cssConfig, verbose = false) {
  */
 async function processSingleCSSFile(file, cssConfig, verbose = false) {
 	try {
+		// Limit file size to prevent memory exhaustion during processing
+		const stats = fs.statSync(file);
+		const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+		
+		if (stats.size > MAX_FILE_SIZE) {
+			throw new Error(`File ${path.basename(file)} is too large (${Math.round(stats.size / 1024 / 1024)}MB). Maximum allowed: ${Math.round(MAX_FILE_SIZE / 1024 / 1024)}MB`);
+		}
+		
 		// Read raw CSS content
 		const css = fs.readFileSync(file, 'utf8');
 		
@@ -149,7 +212,10 @@ async function processSingleCSSFile(file, cssConfig, verbose = false) {
 		if (error.code === 'MODULE_NOT_FOUND') {
 			throw new Error('LightningCSS not found. Install with: npm install lightningcss');
 		}
-		throw error;
+		
+		// Use basename to avoid exposing internal file paths in error messages  
+		const fileName = path.basename(file);
+		throw new Error(`CSS processing failed for ${fileName}: ${error.message}`);
 	}
 }
 
@@ -191,6 +257,15 @@ async function processWithLightning(cssContent, file, cssConfig, verbose) {
 	
 	// Ensure output directory exists
 	fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+	
+	/*
+	 * Verify write permissions to prevent cryptic EACCES errors during file writing
+	 */
+	try {
+		fs.accessSync(path.dirname(outputPath), fs.constants.W_OK);
+	} catch (permissionError) {
+		throw new Error(`Cannot write to directory: ${path.dirname(outputPath)}. Check permissions.`);
+	}
 	
 	/*
 	 * File Output
