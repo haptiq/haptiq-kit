@@ -1,5 +1,5 @@
 {
-	"name": "@haptiq/toolkit",
+	"name": "haptiq-kit",
 	"version": "0.0.1",
 	"description": "Unified toolkit for Haptiq projects",
 	"private": true,
