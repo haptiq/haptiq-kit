@@ -44,31 +44,22 @@ async function buildCSS(config = {}, verbose = false) {
 
 	const projectRoot = process.cwd();
 
-	// Validate source glob pattern to prevent path traversal
-	if (typeof cssConfig.src !== 'string' || cssConfig.src.includes('..')) {
-		throw new Error('Source pattern must not contain path traversal sequences (..)');
+	if (typeof cssConfig.src !== 'string') {
+		throw new Error('Source pattern must be a string');
 	}
 
-	// Block patterns targeting sensitive system files and directories
-	const dangerousPatterns = [
-		'/etc/**',
-		'/var/**',
-		'/usr/**',
-		'/home/**',
-		'~/**',
-		'**/node_modules/**',
-		'**/.git/**',
-		'**/.env*'
-	];
+	if (path.isAbsolute(cssConfig.src) || cssConfig.src.startsWith('~')) {
+		throw new Error('Source pattern must be a relative path');
+	}
 
-	if (dangerousPatterns.some(pattern => cssConfig.src.includes(pattern))) {
-		throw new Error('Source pattern targets potentially sensitive files or directories');
+	if (cssConfig.src.includes('..')) {
+		throw new Error('Source pattern must not contain path traversal sequences (..)');
 	}
 
 	// Ensure destination stays within project boundaries to prevent path traversal
 	const safeDest = path.resolve(projectRoot, cssConfig.dest);
 
-	if (!safeDest.startsWith(projectRoot)) {
+	if (safeDest !== projectRoot && !safeDest.startsWith(projectRoot + path.sep)) {
 		throw new Error(`Destination path "${cssConfig.dest}" must be within project directory`);
 	}
 
