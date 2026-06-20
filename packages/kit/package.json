@@ -17,14 +17,15 @@
 		"kit": "./bin/haptiq.kit.js"
 	},
 	"dependencies": {
-		"commander": "^11.0.0",
-		"sass": "^1.69.5",
-		"lightningcss": "^1.26.0",
-		"glob": "^10.3.10"
+		"commander": "^15.0.0",
+		"sass": "^1.101.0",
+		"lightningcss": "^1.32.0",
+		"glob": "^13.0.6",
+		"esbuild": "^0.28.0"
 	},
 	"engines": {
-		"node": ">=20.0.0",
-		"npm": ">=10.8.0"
+		"node": ">=24.0.0",
+		"npm": ">=11.0.0"
 	},
 	"files": [
 		"bin/",
