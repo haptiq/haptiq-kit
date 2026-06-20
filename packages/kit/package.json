@@ -9,7 +9,7 @@
 		"haptiq"
 	],
 	"author": "Haptiq",
-	"license": "MIT",
+	"license": "GPL-2.0-or-later",
 	"homepage": "...",
 	"repository": "...",
 	"main": "lib/index.js",
