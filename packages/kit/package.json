@@ -12,7 +12,7 @@
 	"license": "GPL-2.0-or-later",
 	"homepage": "...",
 	"repository": "...",
-	"main": "lib/index.js",
+	"type": "module",
 	"bin": {
 		"kit": "./bin/haptiq.kit.js"
 	},
