@@ -8,7 +8,9 @@ import fs from 'fs';
 import path from 'path';
 import { globSync } from 'glob';
 import * as sass from 'sass';
-import { transform } from 'lightningcss';
+import { transform, browserslistToTargets } from 'lightningcss';
+import browserslist from 'browserslist';
+import haptiqBrowserslistConfig from '@haptiq/browserslist-config';
 
 
 /**
@@ -25,8 +27,14 @@ import { transform } from 'lightningcss';
  * @see {@link ../examples/haptiq.config.js} for all available options
  */
 async function buildCSS(config = {}, verbose = false) {
+	// Use project's own browserslist config if present, otherwise fall back to @haptiq/browserslist-config
+	const projectConfig = browserslist.loadConfig({ path: process.cwd() });
+	const resolvedTargets = browserslistToTargets(
+		browserslist(projectConfig ?? haptiqBrowserslistConfig, { path: process.cwd() })
+	);
+
 	const defaultLightningConfig = {
-		targets: { chrome: 80, firefox: 90, safari: 14 },
+		targets: resolvedTargets,
 		minify: true,
 		sourceMap: true
 	};
