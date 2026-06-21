@@ -10,10 +10,11 @@
 	],
 	"author": "Haptiq",
 	"license": "GPL-2.0-or-later",
-	"homepage": "...",
+	"homepage": "https://github.com/haptiq/haptiq-kit/blob/main/packages/kit/README.md",
 	"repository": {
 		"type": "git",
-		"url": "..."
+		"url": "git+https://github.com/haptiq/haptiq-kit.git",
+		"directory": "packages/kit"
 	},
 	"type": "module",
 	"bin": {
