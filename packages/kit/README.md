@@ -41,7 +41,7 @@ kit css --verbose
 
 ### `kit js`
 
-Bundles JavaScript files with ESBuild.
+Minifies and combines JavaScript files with Terser.
 
 ```sh
 kit js
@@ -57,7 +57,7 @@ kit js --skip <name>   # skip a named config (multi-config mode)
 Create a `haptiq.config.js` in your project root. All options are optional.
 
 ```js
-export default {
+module.exports = {
   css: {
     src: 'assets/**/*.{scss,sass,css}',  // default: 'src/**/*.{scss,sass,css}'
     dest: 'public/css',                  // default: 'css'
@@ -72,28 +72,29 @@ export default {
     },
   },
 
-  // Single bundle
+  // Combine mode — all files into one output
   js: {
-    src: 'assets/**/*.js',      // default: 'src/**/*.js'
+    src: 'assets/**/*.js',       // default: 'src/**/*.js'
     dest: 'public/js/bundle.js', // default: 'js/bundle.js'
-    esbuild: {
-      bundle: true,
-      minify: true,
-      sourcemap: true,
-      format: 'esm',
-      target: 'es2020',
-      treeShaking: true,  // default: false
+    terser: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+      format: {
+        comments: false,
+      },
     },
   },
 };
 ```
 
-### Multiple JS bundles
+### Multiple JS configs
 
-Use `js.configs` to define several named bundles:
+Use `js.configs` to define several named configurations:
 
 ```js
-export default {
+module.exports = {
   js: {
     configs: {
       'app': {
