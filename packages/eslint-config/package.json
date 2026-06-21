@@ -1,0 +1,46 @@
+{
+	"name": "@haptiq/eslint-config",
+	"version": "0.1.0",
+	"description": "Shared ESLint configuration for Haptiq projects.",
+	"keywords": [
+		"eslint",
+		"eslint-config",
+		"haptiq"
+	],
+	"author": "Haptiq",
+	"license": "GPL-2.0-or-later",
+	"homepage": "https://github.com/haptiq/haptiq-kit/blob/main/packages/eslint-config/README.md",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/haptiq/haptiq-kit.git",
+		"directory": "packages/eslint-config"
+	},
+	"type": "module",
+	"exports": {
+		".": "./index.js"
+	},
+	"dependencies": {
+		"@eslint/js": "^9.39.0",
+		"globals": "^17.6.0"
+	},
+	"devDependencies": {
+		"eslint": "^9.39.0"
+	},
+	"peerDependencies": {
+		"eslint": ">=9.7.0",
+		"@wordpress/eslint-plugin": ">=22.0.0"
+	},
+	"peerDependenciesMeta": {
+		"@wordpress/eslint-plugin": {
+			"optional": true
+		}
+	},
+	"engines": {
+		"node": ">=24.0.0",
+		"npm": ">=11.0.0"
+	},
+	"files": [
+		"index.js",
+		"lib/"
+	]
+}
