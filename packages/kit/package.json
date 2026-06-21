@@ -11,10 +11,13 @@
 	"author": "Haptiq",
 	"license": "GPL-2.0-or-later",
 	"homepage": "...",
-	"repository": "...",
+	"repository": {
+		"type": "git",
+		"url": "..."
+	},
 	"type": "module",
 	"bin": {
-		"kit": "./bin/haptiq.kit.js"
+		"kit": "bin/haptiq.kit.js"
 	},
 	"dependencies": {
 		"commander": "^15.0.0",
