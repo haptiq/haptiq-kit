@@ -1,0 +1,10 @@
+'use strict';
+
+// Modern config — evergreen browsers only, no market share floor
+module.exports = [
+	'last 2 Chrome versions',
+	'last 2 Firefox versions',
+	'last 2 Safari versions',
+	'last 2 Edge versions',
+	'not dead',
+];

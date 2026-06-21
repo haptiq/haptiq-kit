@@ -1,0 +1,30 @@
+{
+	"name": "@haptiq/browserslist-config",
+	"version": "0.1.0",
+	"description": "Shared Browserslist configuration for Haptiq projects.",
+	"keywords": [
+		"browserslist",
+		"browserslist-config",
+		"haptiq"
+	],
+	"author": "Haptiq",
+	"license": "GPL-2.0-or-later",
+	"homepage": "https://github.com/haptiq/haptiq-kit/blob/main/packages/browserslist-config/README.md",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/haptiq/haptiq-kit.git",
+		"directory": "packages/browserslist-config"
+	},
+	"exports": {
+		".": "./index.js",
+		"./modern": "./modern.js"
+	},
+	"files": [
+		"index.js",
+		"modern.js"
+	],
+	"engines": {
+		"node": ">=24.0.0",
+		"npm": ">=11.0.0"
+	}
+}
