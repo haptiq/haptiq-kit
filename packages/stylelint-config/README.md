@@ -5,7 +5,7 @@ Shared Stylelint configuration for Haptiq projects.
 ## Requirements
 
 - Node >= 24
-- stylelint >= 16.8.2
+- stylelint 16.x (stylelint 17+ not yet supported — pinned to 16 for compatibility with `@wordpress/stylelint-config`)
 
 ## Installation
 

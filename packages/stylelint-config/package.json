@@ -24,10 +24,10 @@
 		"lib/"
 	],
 	"peerDependencies": {
-		"stylelint": ">=16.8.2",
-		"stylelint-config-standard": ">=38.0.0",
-		"stylelint-config-standard-scss": ">=15.0.0",
-		"@wordpress/stylelint-config": ">=23.0.0"
+		"stylelint": "^16.23.1",
+		"stylelint-config-standard": "^39",
+		"stylelint-config-standard-scss": "^16",
+		"@wordpress/stylelint-config": ">=23"
 	},
 	"peerDependenciesMeta": {
 		"@wordpress/stylelint-config": {
@@ -35,7 +35,7 @@
 		}
 	},
 	"engines": {
-		"node": ">=24.0.0",
-		"npm": ">=11.0.0"
+		"node": ">=24",
+		"npm": ">=11"
 	}
 }
