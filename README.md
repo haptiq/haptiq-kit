@@ -7,6 +7,7 @@ Monorepo for shared build tools and linting configurations used across Haptiq pr
 | Package | Description |
 |---|---|
 | [`@haptiq/kit`](packages/kit) | CLI for compiling CSS/SCSS and bundling JavaScript |
+| [`@haptiq/browserslist-config`](packages/browserslist-config) | Shared Browserslist configuration |
 | [`@haptiq/eslint-config`](packages/eslint-config) | Shared ESLint configuration |
 | [`@haptiq/stylelint-config`](packages/stylelint-config) | Shared Stylelint configuration |
 
