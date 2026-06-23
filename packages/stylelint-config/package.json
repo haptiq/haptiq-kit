@@ -16,23 +16,16 @@
 		"directory": "packages/stylelint-config"
 	},
 	"exports": {
-		".": "./index.js",
-		"./wordpress": "./lib/wordpress.js"
+		".": "./index.js"
 	},
 	"files": [
-		"index.js",
-		"lib/"
+		"index.js"
 	],
 	"peerDependencies": {
 		"stylelint": "^16.23.1",
 		"stylelint-config-standard": "^39",
 		"stylelint-config-standard-scss": "^16",
-		"@wordpress/stylelint-config": ">=23"
 	},
-	"peerDependenciesMeta": {
-		"@wordpress/stylelint-config": {
-			"optional": true
-		}
 	},
 	"engines": {
 		"node": ">=24",
