@@ -14,5 +14,19 @@ module.exports = {
 	rules: {
 		'@stylistic/function-parentheses-space-inside': 'always',
 		'@stylistic/number-leading-zero': 'always',
+		'property-layout-mappings': [
+			'flow-relative',
+			{
+				severity: 'warning',
+				ignoreProperties: [
+					'width',
+					'height',
+					'min-width',
+					'max-width',
+					'min-height',
+					'max-height'
+				]
+			}
+		],
 	},
 };
