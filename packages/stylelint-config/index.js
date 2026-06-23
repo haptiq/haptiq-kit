@@ -28,5 +28,6 @@ module.exports = {
 				]
 			}
 		],
+		'scss/selector-no-redundant-nesting-selector': true,
 	},
 };
