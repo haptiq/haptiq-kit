@@ -33,5 +33,9 @@ module.exports = {
 			'^[a-z][a-z0-9]*(-[a-z0-9]+)*(__[a-z0-9]+(-[a-z0-9]+)*)?(--[a-z0-9]+(-[a-z0-9]+)*)?$',
 			{ message: 'Expected class selector to follow BEM naming' },
 		],
+		'custom-property-pattern': [
+			'^[a-z][a-z0-9]*(-[a-z0-9]+)*(--[a-z0-9]+(-[a-z0-9]+)*)*$',
+			{ message: 'Expected custom property to be kebab-case or BEM-like' },
+		],
 	},
 };
