@@ -11,4 +11,7 @@ module.exports = {
 			extends: ['stylelint-config-standard-scss'],
 		},
 	],
+	rules: {
+		'@stylistic/function-parentheses-space-inside': 'always',
+	},
 };
