@@ -13,5 +13,6 @@ module.exports = {
 	],
 	rules: {
 		'@stylistic/function-parentheses-space-inside': 'always',
+		'@stylistic/number-leading-zero': 'always',
 	},
 };
