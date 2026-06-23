@@ -21,11 +21,18 @@
 	"files": [
 		"index.js"
 	],
-	"peerDependencies": {
-		"stylelint": "^16.23.1",
-		"stylelint-config-standard": "^39",
-		"stylelint-config-standard-scss": "^16",
+	"dependencies": {
+		"@stylistic/stylelint-plugin": "^5.2.0"
 	},
+	"peerDependencies": {
+		"stylelint": "^17.0.0",
+		"stylelint-config-standard": "^40",
+		"stylelint-config-standard-scss": "^17"
+	},
+	"devDependencies": {
+		"stylelint": "^17.13.0",
+		"stylelint-config-standard": "^40.0.0",
+		"stylelint-config-standard-scss": "^17.0.0"
 	},
 	"engines": {
 		"node": ">=24",

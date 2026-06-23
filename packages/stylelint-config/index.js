@@ -3,6 +3,7 @@
 
 /** @type {import('stylelint').Config} */
 module.exports = {
+	plugins: ['@stylistic/stylelint-plugin'],
 	extends: ['stylelint-config-standard'],
 	overrides: [
 		{
