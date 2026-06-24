@@ -28,6 +28,7 @@ module.exports = {
 		'@stylistic/property-case': 'lower',
 		'@stylistic/declaration-colon-newline-after': 'always-multi-line',
 		'@stylistic/value-list-max-empty-lines': 0,
+		'@stylistic/function-max-empty-lines': 0,
 		'@stylistic/number-leading-zero': 'always',
 		'property-layout-mappings': [
 			'flow-relative',
