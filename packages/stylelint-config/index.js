@@ -15,6 +15,7 @@ module.exports = {
 		'@stylistic/function-parentheses-space-inside': 'always',
 		'declaration-no-important': true,
 		'declaration-empty-line-before': null,
+		'no-unknown-animations': true,
 		'@stylistic/number-leading-zero': 'always',
 		'property-layout-mappings': [
 			'flow-relative',
