@@ -31,6 +31,7 @@ module.exports = {
 		'@stylistic/function-parentheses-space-inside': 'always-single-line',
 		'@stylistic/function-parentheses-newline-inside': 'always-multi-line',
 		'@stylistic/number-leading-zero': 'always',
+		'@stylistic/number-no-trailing-zeros': true,
 		'property-layout-mappings': [
 			'flow-relative',
 			{
