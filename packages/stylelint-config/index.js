@@ -12,7 +12,6 @@ module.exports = {
 		},
 	],
 	rules: {
-		'@stylistic/function-parentheses-space-inside': 'always',
 		'declaration-no-important': true,
 		'declaration-empty-line-before': null,
 		'no-unknown-animations': true,
@@ -29,6 +28,7 @@ module.exports = {
 		'@stylistic/declaration-colon-newline-after': 'always-multi-line',
 		'@stylistic/value-list-max-empty-lines': 0,
 		'@stylistic/function-max-empty-lines': 0,
+		'@stylistic/function-parentheses-space-inside': 'always-single-line',
 		'@stylistic/number-leading-zero': 'always',
 		'property-layout-mappings': [
 			'flow-relative',
