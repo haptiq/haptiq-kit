@@ -23,6 +23,7 @@ module.exports = {
 				ignore: ['between-comments', 'stylelint-commands'],
 			},
 		],
+		'@stylistic/color-hex-case': 'lower',
 		'@stylistic/number-leading-zero': 'always',
 		'property-layout-mappings': [
 			'flow-relative',
