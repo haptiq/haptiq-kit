@@ -13,6 +13,7 @@ module.exports = {
 	],
 	rules: {
 		'@stylistic/function-parentheses-space-inside': 'always',
+		'declaration-no-important': true,
 		'@stylistic/number-leading-zero': 'always',
 		'property-layout-mappings': [
 			'flow-relative',
