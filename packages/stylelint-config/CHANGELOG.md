@@ -1,5 +1,11 @@
 # @haptiq/stylelint-config
 
+## 0.4.0
+
+### Minor Changes
+
+- 0b0862f: Expanded ruleset with formatting, correctness, and naming convention rules
+
 ## 0.3.0
 
 ### Minor Changes
