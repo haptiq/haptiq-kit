@@ -16,6 +16,13 @@ module.exports = {
 		'declaration-no-important': true,
 		'declaration-empty-line-before': null,
 		'no-unknown-animations': true,
+		'scss/double-slash-comment-empty-line-before': [
+			'always',
+			{
+				except: [],
+				ignore: ['between-comments', 'stylelint-commands'],
+			},
+		],
 		'@stylistic/number-leading-zero': 'always',
 		'property-layout-mappings': [
 			'flow-relative',
