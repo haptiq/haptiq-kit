@@ -25,6 +25,7 @@ module.exports = {
 		],
 		'@stylistic/color-hex-case': 'lower',
 		'@stylistic/unit-case': 'lower',
+		'@stylistic/property-case': 'lower',
 		'@stylistic/number-leading-zero': 'always',
 		'property-layout-mappings': [
 			'flow-relative',
