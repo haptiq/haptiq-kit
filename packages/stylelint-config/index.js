@@ -29,6 +29,7 @@ module.exports = {
 		'@stylistic/value-list-max-empty-lines': 0,
 		'@stylistic/function-max-empty-lines': 0,
 		'@stylistic/function-parentheses-space-inside': 'always-single-line',
+		'@stylistic/function-parentheses-newline-inside': 'always-multi-line',
 		'@stylistic/number-leading-zero': 'always',
 		'property-layout-mappings': [
 			'flow-relative',
