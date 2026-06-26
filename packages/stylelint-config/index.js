@@ -58,6 +58,7 @@ module.exports = {
 		'@stylistic/media-query-list-comma-space-before': 'never',
 		'@stylistic/indentation': 'tab',
 		'@stylistic/max-empty-lines': 2,
+		'@stylistic/no-multiple-whitespaces': true,
 		'property-layout-mappings': [
 			'flow-relative',
 			{
