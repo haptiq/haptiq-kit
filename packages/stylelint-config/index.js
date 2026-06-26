@@ -40,6 +40,7 @@ module.exports = {
 		'@stylistic/selector-descendant-combinator-no-non-space': true,
 		'@stylistic/selector-max-empty-lines': 0,
 		'@stylistic/selector-pseudo-class-case': 'lower',
+		'@stylistic/selector-pseudo-class-parentheses-space-inside': 'always',
 		'property-layout-mappings': [
 			'flow-relative',
 			{
