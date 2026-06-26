@@ -42,6 +42,8 @@ module.exports = {
 		'@stylistic/selector-pseudo-class-case': 'lower',
 		'@stylistic/selector-pseudo-class-parentheses-space-inside': 'always',
 		'@stylistic/selector-pseudo-element-case': 'lower',
+		'@stylistic/selector-list-comma-newline-after': 'always',
+		'@stylistic/selector-list-comma-newline-before': 'never-multi-line',
 		'property-layout-mappings': [
 			'flow-relative',
 			{
