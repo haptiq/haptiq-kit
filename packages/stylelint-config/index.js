@@ -59,6 +59,7 @@ module.exports = {
 		'@stylistic/indentation': 'tab',
 		'@stylistic/max-empty-lines': 2,
 		'@stylistic/no-multiple-whitespaces': true,
+		'@stylistic/no-extra-semicolons': true,
 		'property-layout-mappings': [
 			'flow-relative',
 			{
