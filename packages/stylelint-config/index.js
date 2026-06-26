@@ -35,6 +35,8 @@ module.exports = {
 		'@stylistic/selector-attribute-brackets-space-inside': 'never',
 		'@stylistic/selector-attribute-operator-space-after': 'never',
 		'@stylistic/selector-attribute-operator-space-before': 'never',
+		'@stylistic/selector-combinator-space-after': 'always',
+		'@stylistic/selector-combinator-space-before': 'always',
 		'property-layout-mappings': [
 			'flow-relative',
 			{
