@@ -57,6 +57,7 @@ module.exports = {
 		'@stylistic/media-query-list-comma-space-after': 'always-single-line',
 		'@stylistic/media-query-list-comma-space-before': 'never',
 		'@stylistic/indentation': 'tab',
+		'@stylistic/max-empty-lines': 2,
 		'property-layout-mappings': [
 			'flow-relative',
 			{
