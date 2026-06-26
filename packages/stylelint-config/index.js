@@ -41,6 +41,7 @@ module.exports = {
 		'@stylistic/selector-max-empty-lines': 0,
 		'@stylistic/selector-pseudo-class-case': 'lower',
 		'@stylistic/selector-pseudo-class-parentheses-space-inside': 'always',
+		'@stylistic/selector-pseudo-element-case': 'lower',
 		'property-layout-mappings': [
 			'flow-relative',
 			{
