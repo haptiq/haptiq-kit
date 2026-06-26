@@ -50,6 +50,8 @@ module.exports = {
 		'@stylistic/media-feature-colon-space-before': 'never',
 		'@stylistic/media-feature-name-case': 'lower',
 		'@stylistic/media-feature-parentheses-space-inside': 'always',
+		'@stylistic/media-feature-range-operator-space-after': 'always',
+		'@stylistic/media-feature-range-operator-space-before': 'always',
 		'property-layout-mappings': [
 			'flow-relative',
 			{
