@@ -70,7 +70,15 @@ module.exports = {
 					'min-width',
 					'max-width',
 					'min-height',
-					'max-height'
+					'max-height',
+					'border-top',
+					'border-right',
+					'border-bottom',
+					'border-left',
+					'top',
+					'right',
+					'bottom',
+					'left'
 				]
 			}
 		],
