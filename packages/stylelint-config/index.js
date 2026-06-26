@@ -37,6 +37,7 @@ module.exports = {
 		'@stylistic/selector-attribute-operator-space-before': 'never',
 		'@stylistic/selector-combinator-space-after': 'always',
 		'@stylistic/selector-combinator-space-before': 'always',
+		'@stylistic/selector-descendant-combinator-no-non-space': true,
 		'property-layout-mappings': [
 			'flow-relative',
 			{
