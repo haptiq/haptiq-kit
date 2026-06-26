@@ -52,6 +52,10 @@ module.exports = {
 		'@stylistic/media-feature-parentheses-space-inside': 'always',
 		'@stylistic/media-feature-range-operator-space-after': 'always',
 		'@stylistic/media-feature-range-operator-space-before': 'always',
+		'@stylistic/media-query-list-comma-newline-after': 'always-multi-line',
+		'@stylistic/media-query-list-comma-newline-before': 'never-multi-line',
+		'@stylistic/media-query-list-comma-space-after': 'always-single-line',
+		'@stylistic/media-query-list-comma-space-before': 'never',
 		'property-layout-mappings': [
 			'flow-relative',
 			{
