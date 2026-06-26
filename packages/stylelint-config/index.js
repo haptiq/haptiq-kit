@@ -46,6 +46,8 @@ module.exports = {
 		'@stylistic/selector-list-comma-newline-before': 'never-multi-line',
 		'@stylistic/selector-list-comma-space-after': 'always-single-line',
 		'@stylistic/selector-list-comma-space-before': 'never',
+		'@stylistic/media-feature-colon-space-after': 'always',
+		'@stylistic/media-feature-colon-space-before': 'never',
 		'property-layout-mappings': [
 			'flow-relative',
 			{
