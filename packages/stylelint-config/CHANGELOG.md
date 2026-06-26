@@ -1,5 +1,11 @@
 # @haptiq/stylelint-config
 
+## 0.5.0
+
+### Minor Changes
+
+- ceaacc2: Add & update @stylistic rules for selectors, media queries, indentation and whitespace
+
 ## 0.4.0
 
 ### Minor Changes
