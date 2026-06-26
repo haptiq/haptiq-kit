@@ -39,6 +39,7 @@ module.exports = {
 		'@stylistic/selector-combinator-space-before': 'always',
 		'@stylistic/selector-descendant-combinator-no-non-space': true,
 		'@stylistic/selector-max-empty-lines': 0,
+		'@stylistic/selector-pseudo-class-case': 'lower',
 		'property-layout-mappings': [
 			'flow-relative',
 			{
