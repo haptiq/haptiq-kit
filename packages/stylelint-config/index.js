@@ -33,6 +33,8 @@ module.exports = {
 		'@stylistic/number-leading-zero': 'always',
 		'@stylistic/number-no-trailing-zeros': true,
 		'@stylistic/selector-attribute-brackets-space-inside': 'never',
+		'@stylistic/selector-attribute-operator-space-after': 'never',
+		'@stylistic/selector-attribute-operator-space-before': 'never',
 		'property-layout-mappings': [
 			'flow-relative',
 			{
