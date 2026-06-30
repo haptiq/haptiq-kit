@@ -16,6 +16,7 @@ export default [
 			'import/no-unresolved': [ 'error', { ignore: [ '^@wordpress/' ] } ],
 			'import/no-extraneous-dependencies': 'off',
 			'jsdoc/require-param': 'off',
+			'prettier/prettier': 'off',
 		},
 	},
 ];
