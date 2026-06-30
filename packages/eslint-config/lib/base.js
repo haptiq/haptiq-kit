@@ -31,6 +31,12 @@ export default [
 			'@stylistic/array-bracket-newline': ['error', { multiline: true }],
 			'@stylistic/array-bracket-spacing': ['error', 'never'],
 			'@stylistic/array-element-newline': ['error', { multiline: true, minItems: 3 }],
+			'@stylistic/object-curly-newline': ['error', {
+				ImportDeclaration: { minProperties: 2 },
+				ExportDeclaration: { minProperties: 2 },
+				ObjectExpression: { multiline: true },
+				ObjectPattern: { multiline: true },
+			}],
 		},
 	},
 ]
