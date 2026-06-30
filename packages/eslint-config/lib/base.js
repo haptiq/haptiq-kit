@@ -28,6 +28,9 @@ export default [
 			'object-shorthand': ['error', 'always'],
 			'prefer-template': 'error',
 			'no-duplicate-imports': 'error',
+			'@stylistic/array-bracket-newline': ['error', { multiline: true }],
+			'@stylistic/array-bracket-spacing': ['error', 'never'],
+			'@stylistic/array-element-newline': ['error', { multiline: true, minItems: 3 }],
 		},
 	},
 ]
