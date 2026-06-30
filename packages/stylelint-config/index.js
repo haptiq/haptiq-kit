@@ -12,6 +12,7 @@ module.exports = {
 		},
 	],
 	rules: {
+		'color-named': 'never',
 		'declaration-no-important': true,
 		'declaration-empty-line-before': null,
 		'no-unknown-animations': true,
