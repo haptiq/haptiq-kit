@@ -15,6 +15,7 @@ export default [
 			// not resolvable from node_modules in a custom config context.
 			'import/no-unresolved': [ 'error', { ignore: [ '^@wordpress/' ] } ],
 			'import/no-extraneous-dependencies': 'off',
+			'jsdoc/require-param': 'off',
 		},
 	},
 ];
