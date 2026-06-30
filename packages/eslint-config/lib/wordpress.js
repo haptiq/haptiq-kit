@@ -9,4 +9,12 @@ import wordpress from '@wordpress/eslint-plugin';
 /** @type {import('eslint').Linter.Config[]} */
 export default [
 	...wordpress.configs.recommended,
+	{
+		rules: {
+			// @wordpress/* packages are webpack externals provided by WordPress at runtime,
+			// not resolvable from node_modules in a custom config context.
+			'import/no-unresolved': [ 'error', { ignore: [ '^@wordpress/' ] } ],
+			'import/no-extraneous-dependencies': 'off',
+		},
+	},
 ];
