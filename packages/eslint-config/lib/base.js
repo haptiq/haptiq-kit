@@ -38,6 +38,7 @@ export default [
 				ObjectPattern: { multiline: true },
 			}],
 			'@stylistic/object-property-newline': ['error', { allowAllPropertiesOnSameLine: true }],
+			'@stylistic/brace-style': ['error', '1tbs'],
 		},
 	},
 ]
