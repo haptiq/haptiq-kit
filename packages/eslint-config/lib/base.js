@@ -42,6 +42,7 @@ export default [
 			'@stylistic/block-spacing': ['error', 'always'],
 			'@stylistic/spaced-comment': ['error', 'always'],
 			'@stylistic/space-in-parens': ['error', 'always'],
+			'@stylistic/eol-last': ['error', 'always'],
 		},
 	},
 ]
