@@ -15,6 +15,7 @@ module.exports = {
 		'color-named': 'never',
 		'declaration-no-important': true,
 		'declaration-empty-line-before': null,
+		'font-weight-notation': 'numeric',
 		'no-unknown-animations': true,
 		'scss/double-slash-comment-empty-line-before': [
 			'always',
