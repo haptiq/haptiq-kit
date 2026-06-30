@@ -46,6 +46,13 @@ export default [
 			'@stylistic/no-trailing-spaces': 'error',
 			'@stylistic/comma-dangle': ['error', 'always-multiline'],
 			'@stylistic/comma-spacing': ['error', { before: false, after: true }],
+			'no-restricted-globals': ['warn', {
+				name: 'jQuery',
+				message: 'Consider using vanilla JS instead of jQuery.',
+			}, {
+				name: '$',
+				message: 'Consider using vanilla JS instead of jQuery.',
+			}]
 		},
 	},
 ]
