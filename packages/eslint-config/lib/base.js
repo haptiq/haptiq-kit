@@ -39,6 +39,7 @@ export default [
 			}],
 			'@stylistic/object-property-newline': ['error', { allowAllPropertiesOnSameLine: true }],
 			'@stylistic/brace-style': ['error', '1tbs'],
+			'@stylistic/block-spacing': ['error', 'always'],
 		},
 	},
 ]
