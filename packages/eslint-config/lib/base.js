@@ -26,6 +26,7 @@ export default [
 			'prefer-const': 'error',
 			'eqeqeq': ['error', 'always'],
 			'object-shorthand': ['error', 'always'],
+			'prefer-template': 'error',
 		},
 	},
 ]
