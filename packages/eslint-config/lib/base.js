@@ -45,6 +45,7 @@ export default [
 			'@stylistic/eol-last': ['error', 'always'],
 			'@stylistic/no-trailing-spaces': 'error',
 			'@stylistic/comma-dangle': ['error', 'always-multiline'],
+			'@stylistic/comma-spacing': ['error', { before: false, after: true }],
 		},
 	},
 ]
