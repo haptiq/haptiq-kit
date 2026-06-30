@@ -85,6 +85,7 @@ module.exports = {
 				]
 			}
 		],
+		'scss/no-global-function-names': true,
 		'scss/selector-no-redundant-nesting-selector': true,
 		'selector-max-id': 0,
 		'selector-class-pattern': [
