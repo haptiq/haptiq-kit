@@ -37,6 +37,7 @@ export default [
 				ObjectExpression: { multiline: true },
 				ObjectPattern: { multiline: true },
 			}],
+			'@stylistic/object-property-newline': ['error', { allowAllPropertiesOnSameLine: true }],
 		},
 	},
 ]
