@@ -24,6 +24,7 @@
 		"globals": "^17.6.0"
 	},
 	"devDependencies": {
+		"@wordpress/eslint-plugin": "^25.0.0",
 		"eslint": "^9.39.0"
 	},
 	"peerDependencies": {
