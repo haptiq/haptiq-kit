@@ -16,6 +16,7 @@ module.exports = {
 		'declaration-no-important': true,
 		'declaration-empty-line-before': null,
 		'font-weight-notation': 'numeric',
+		'max-nesting-depth': 3,
 		'no-unknown-animations': true,
 		'scss/double-slash-comment-empty-line-before': [
 			'always',
