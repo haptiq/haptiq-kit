@@ -43,6 +43,7 @@ export default [
 			'@stylistic/spaced-comment': ['error', 'always'],
 			'@stylistic/space-in-parens': ['error', 'always'],
 			'@stylistic/eol-last': ['error', 'always'],
+			'@stylistic/no-trailing-spaces': 'error',
 		},
 	},
 ]
