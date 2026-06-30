@@ -41,6 +41,7 @@ export default [
 			'@stylistic/brace-style': ['error', '1tbs'],
 			'@stylistic/block-spacing': ['error', 'always'],
 			'@stylistic/spaced-comment': ['error', 'always'],
+			'@stylistic/space-in-parens': ['error', 'always'],
 		},
 	},
 ]
