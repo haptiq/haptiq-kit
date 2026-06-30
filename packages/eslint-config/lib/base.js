@@ -23,6 +23,7 @@ export default [
 			'no-console': 'warn',
 			'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
 			'no-var': 'error',
+			'prefer-const': 'error',
 		},
 	},
 ]
