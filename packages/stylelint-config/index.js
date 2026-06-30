@@ -86,6 +86,7 @@ module.exports = {
 			}
 		],
 		'scss/selector-no-redundant-nesting-selector': true,
+		'selector-max-id': 0,
 		'selector-class-pattern': [
 			'^[a-z][a-z0-9]*(-[a-z0-9]+)*(__[a-z0-9]+(-[a-z0-9]+)*)?(--[a-z0-9]+(-[a-z0-9]+)*)?$',
 			{ message: 'Expected class selector to follow BEM naming' },
