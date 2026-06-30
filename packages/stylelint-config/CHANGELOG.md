@@ -1,5 +1,11 @@
 # @haptiq/stylelint-config
 
+## 0.6.0
+
+### Minor Changes
+
+- 1e372b9: Added some 5 new rules and updated readme
+
 ## 0.5.0
 
 ### Minor Changes
