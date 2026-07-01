@@ -24,6 +24,7 @@ export default [
 			'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
 			'no-var': 'error',
 			'prefer-const': 'error',
+			'curly': 'error',
 			'eqeqeq': ['error', 'always'],
 			'object-shorthand': ['error', 'always'],
 			'prefer-template': 'error',
