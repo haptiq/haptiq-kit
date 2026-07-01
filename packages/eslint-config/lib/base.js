@@ -33,6 +33,7 @@ export default [
 			'curly': 'error',
 			'eqeqeq': ['error', 'always'],
 			'object-shorthand': ['error', 'always'],
+			'yoda': 'error',
 			'no-restricted-globals': ['warn', {
 				name: 'jQuery',
 				message: 'Consider using vanilla JS instead of jQuery.',
