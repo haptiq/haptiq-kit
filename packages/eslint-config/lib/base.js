@@ -30,6 +30,7 @@ export default [
 			'prefer-template': 'error',
 			'prefer-arrow-callback': 'error',
 			'no-duplicate-imports': 'error',
+			'no-throw-literal': 'error',
 			'no-restricted-globals': ['warn', {
 				name: 'jQuery',
 				message: 'Consider using vanilla JS instead of jQuery.',
