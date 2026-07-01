@@ -44,10 +44,10 @@ async function buildCSS(config = {}, verbose = false, dev = false) {
 		src: 'src/**/*.{scss,sass,css}',
 		dest: 'css',
 		...config.css,
-		// Merge lightning config properly (after user config)
 		lightning: {
 			...defaultLightningConfig,
-			...config.css?.lightning
+			...config.css?.lightning,
+			...(dev && { minify: false })
 		}
 	};
 

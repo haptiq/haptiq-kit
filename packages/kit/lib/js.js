@@ -97,8 +97,8 @@ async function processSingleConfig(jsConfig, verbose, dev = false) {
 		combine,
 		terser: {
 			sourceMap: true,
-			...(dev && { compress: false, mangle: false, format: { beautify: true } }),
-			...jsConfig.terser
+			...jsConfig.terser,
+			...(dev && { compress: false, mangle: false, format: { beautify: true } })
 		}
 	};
 
