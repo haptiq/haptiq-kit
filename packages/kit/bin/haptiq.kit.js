@@ -127,19 +127,21 @@ program
 program
 	.command('css')
 	.description('Build CSS from Sass and CSS files')
+	.option('--dev', 'Build without minification')
 	.option('--verbose', 'Show detailed output for each file processed')
 	.action(createCommandHandler('CSS build', async (config, options) => {
-		await buildCSS(config, options.verbose);
+		await buildCSS(config, options.verbose, options.dev);
 	}));
 
 program
 	.command('js')
 	.description('Bundle JavaScript files with Terser')
+	.option('--dev', 'Build without minification')
 	.option('--verbose', 'Show detailed output for bundling process')
 	.option('--only <name>', 'Only run the named configuration')
 	.option('--skip <name>', 'Skip the named configuration')
 	.action(createCommandHandler('JavaScript build', async (config, options) => {
-		await buildJS(config, options.verbose, { only: options.only, skip: options.skip });
+		await buildJS(config, options.verbose, { only: options.only, skip: options.skip, dev: options.dev });
 	}));
 
 program.parse();

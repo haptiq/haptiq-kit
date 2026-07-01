@@ -26,7 +26,7 @@ import haptiqBrowserslistConfig from '@haptiq/browserslist-config';
  * @returns {Promise<void>}
  * @see {@link ../examples/haptiq.config.js} for all available options
  */
-async function buildCSS(config = {}, verbose = false) {
+async function buildCSS(config = {}, verbose = false, dev = false) {
 	// Use project's own browserslist config if present, otherwise fall back to @haptiq/browserslist-config
 	const projectConfig = browserslist.loadConfig({ path: process.cwd() });
 	const resolvedTargets = browserslistToTargets(
@@ -35,7 +35,7 @@ async function buildCSS(config = {}, verbose = false) {
 
 	const defaultLightningConfig = {
 		targets: resolvedTargets,
-		minify: true,
+		minify: !dev,
 		sourceMap: true
 	};
 

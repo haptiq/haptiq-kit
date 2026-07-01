@@ -24,14 +24,15 @@ import { minify } from 'terser';
 async function buildJS(config = {}, verbose = false, options = {}) {
 	const jsConfig = config.js || {};
 	const hasMultipleConfigs = jsConfig.configs !== undefined;
+	const dev = options.dev ?? false;
 
 	if (hasMultipleConfigs) {
-		await processMultipleConfigs(jsConfig.configs, verbose, options);
+		await processMultipleConfigs(jsConfig.configs, verbose, options, dev);
 	} else {
 		if (options.only || options.skip) {
 			console.warn('⚠️  --only and --skip have no effect with a single configuration');
 		}
-		await processSingleConfig(jsConfig, verbose);
+		await processSingleConfig(jsConfig, verbose, dev);
 	}
 
 	console.log(`✅ JavaScript processing completed.`);
@@ -46,7 +47,7 @@ async function buildJS(config = {}, verbose = false, options = {}) {
  * @param {{ only?: string, skip?: string }} options - CLI filter options
  * @returns {Promise<void>}
  */
-async function processMultipleConfigs(configs, verbose, options = {}) {
+async function processMultipleConfigs(configs, verbose, options = {}, dev = false) {
 	const configNames = Object.keys(configs);
 
 	let configsToProcess = configNames;
@@ -67,7 +68,7 @@ async function processMultipleConfigs(configs, verbose, options = {}) {
 	}
 
 	for (const configName of configsToProcess) {
-		await processSingleConfig(configs[configName], verbose);
+		await processSingleConfig(configs[configName], verbose, dev);
 		if (verbose) {
 			console.log(`  ✅ [${configName}] done`);
 		}
@@ -82,7 +83,7 @@ async function processMultipleConfigs(configs, verbose, options = {}) {
  * @param {boolean} verbose - Show detailed processing logs
  * @returns {Promise<void>}
  */
-async function processSingleConfig(jsConfig, verbose) {
+async function processSingleConfig(jsConfig, verbose, dev = false) {
 	const dest = jsConfig.dest || 'js/bundle.js';
 	let combine = jsConfig.combine;
 	if (combine === undefined) {
@@ -96,6 +97,7 @@ async function processSingleConfig(jsConfig, verbose) {
 		combine,
 		terser: {
 			sourceMap: true,
+			...(dev && { compress: false, mangle: false, format: { beautify: true } }),
 			...jsConfig.terser
 		}
 	};
