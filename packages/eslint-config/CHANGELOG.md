@@ -1,5 +1,11 @@
 # @haptiq/eslint-config
 
+## 0.3.0
+
+### Minor Changes
+
+- 1762994: Added more opinionated rules and reordered them
+
 ## 0.2.0
 
 ### Minor Changes
