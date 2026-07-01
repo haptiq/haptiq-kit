@@ -32,6 +32,7 @@ export default [
 			'no-duplicate-imports': 'error',
 			'no-throw-literal': 'error',
 			'no-shadow': 'error',
+			'no-param-reassign': 'error',
 			'no-restricted-globals': ['warn', {
 				name: 'jQuery',
 				message: 'Consider using vanilla JS instead of jQuery.',
