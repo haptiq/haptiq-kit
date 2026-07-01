@@ -24,15 +24,14 @@ import { minify } from 'terser';
 async function buildJS(config = {}, verbose = false, options = {}) {
 	const jsConfig = config.js || {};
 	const hasMultipleConfigs = jsConfig.configs !== undefined;
-	const dev = options.dev ?? false;
 
 	if (hasMultipleConfigs) {
-		await processMultipleConfigs(jsConfig.configs, verbose, options, dev);
+		await processMultipleConfigs(jsConfig.configs, verbose, options);
 	} else {
 		if (options.only || options.skip) {
 			console.warn('⚠️  --only and --skip have no effect with a single configuration');
 		}
-		await processSingleConfig(jsConfig, verbose, dev);
+		await processSingleConfig(jsConfig, verbose, options.dev ?? false);
 	}
 
 	console.log(`✅ JavaScript processing completed.`);
@@ -47,7 +46,8 @@ async function buildJS(config = {}, verbose = false, options = {}) {
  * @param {{ only?: string, skip?: string, dev?: boolean }} options - CLI filter options
  * @returns {Promise<void>}
  */
-async function processMultipleConfigs(configs, verbose, options = {}, dev = false) {
+async function processMultipleConfigs(configs, verbose, options = {}) {
+	const dev = options.dev ?? false;
 	const configNames = Object.keys(configs);
 
 	let configsToProcess = configNames;
