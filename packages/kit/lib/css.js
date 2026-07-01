@@ -23,6 +23,7 @@ import haptiqBrowserslistConfig from '@haptiq/browserslist-config';
  *
  * @param {Object} config - Configuration object from haptiq.config.js
  * @param {boolean} verbose - Show detailed processing logs
+ * @param {boolean} dev - Skip minification (--dev flag)
  * @returns {Promise<void>}
  * @see {@link ../examples/haptiq.config.js} for all available options
  */

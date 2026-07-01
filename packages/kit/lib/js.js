@@ -18,7 +18,7 @@ import { minify } from 'terser';
  *
  * @param {Object} config - Configuration object from haptiq.config.js
  * @param {boolean} verbose - Show detailed processing logs
- * @param {{ only?: string, skip?: string }} options - CLI filter options
+ * @param {{ only?: string, skip?: string, dev?: boolean }} options - CLI filter options
  * @returns {Promise<void>}
  */
 async function buildJS(config = {}, verbose = false, options = {}) {
@@ -44,7 +44,7 @@ async function buildJS(config = {}, verbose = false, options = {}) {
  *
  * @param {Object} configs - Object with named configurations
  * @param {boolean} verbose - Show detailed processing logs
- * @param {{ only?: string, skip?: string }} options - CLI filter options
+ * @param {{ only?: string, skip?: string, dev?: boolean }} options - CLI filter options
  * @returns {Promise<void>}
  */
 async function processMultipleConfigs(configs, verbose, options = {}, dev = false) {
