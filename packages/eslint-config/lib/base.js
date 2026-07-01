@@ -27,6 +27,7 @@ export default [
 			'eqeqeq': ['error', 'always'],
 			'object-shorthand': ['error', 'always'],
 			'prefer-template': 'error',
+			'prefer-arrow-callback': 'error',
 			'no-duplicate-imports': 'error',
 			'no-restricted-globals': ['warn', {
 				name: 'jQuery',
