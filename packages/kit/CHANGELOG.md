@@ -1,5 +1,11 @@
 # @haptiq/kit
 
+## 0.4.0
+
+### Minor Changes
+
+- c5d9fd7: Add ship command to @haptiq/kit to allow easy deployments via rsync
+
 ## 0.3.0
 
 ### Minor Changes
