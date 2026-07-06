@@ -1,5 +1,11 @@
 # @haptiq/kit
 
+## 0.5.0
+
+### Minor Changes
+
+- 0af6f17: Add dry-run deletion preview and confirmation to avoid accidental deletions
+
 ## 0.4.0
 
 ### Minor Changes
