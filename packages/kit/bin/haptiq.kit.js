@@ -142,8 +142,8 @@ async function loadConfig(verbose = false) {
  */
 function createCommandHandler(taskName, taskFunction) {
 	return async (...args) => {
-		const options = args[args.length - 1];
-		const positionalArgs = args.slice(0, -1);
+		const options = args[args.length - 2];
+		const positionalArgs = args.slice(0, -2);
 		try {
 			const config = await loadConfig(options.verbose);
 			await taskFunction(config, options, ...positionalArgs);
