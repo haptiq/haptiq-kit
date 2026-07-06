@@ -50,7 +50,7 @@ async function ship(config, verbose, options = {}) {
 
 	for (const name of targetsToProcess) {
 		const targetConfig = targets[name] ?? {};
-		const dev = cliDev || targetConfig.dev || false;
+		const dev = (cliDev ?? targetConfig.dev) ?? false;
 
 		await buildCSS(config, verbose, dev);
 		await buildJS(config, verbose, { dev });
