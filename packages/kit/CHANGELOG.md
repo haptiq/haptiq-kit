@@ -1,5 +1,11 @@
 # @haptiq/kit
 
+## 0.6.0
+
+### Minor Changes
+
+- 574b136: Fix CLI flags being silently ignored, validate ship config inputs, and prevent misleading error messages when rsync is missing.
+
 ## 0.5.0
 
 ### Minor Changes
