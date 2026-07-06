@@ -87,6 +87,14 @@ async function loadConfig(verbose = false) {
 				throw new Error('ship configuration must be an object');
 			}
 
+			if (config.ship.src !== undefined && (typeof config.ship.src !== 'string' || config.ship.src.trim() === '')) {
+				throw new Error('ship.src must be a non-empty string');
+			}
+
+			if (config.ship.exclude !== undefined && !Array.isArray(config.ship.exclude)) {
+				throw new Error('ship.exclude must be an array');
+			}
+
 			if (config.ship.targets) {
 				if (typeof config.ship.targets !== 'object' || Array.isArray(config.ship.targets)) {
 					throw new Error('ship.targets must be an object');
