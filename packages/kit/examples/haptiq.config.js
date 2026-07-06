@@ -84,4 +84,49 @@ module.exports = {
 	//     }
 	//   }
 	// },
+
+	// Ship Configuration
+	// Run: kit ship staging   kit ship prod   kit ship dist
+	ship: {
+		// Source directory to sync (default: './')
+		src: './',
+
+		// Files and directories to exclude from the sync
+		exclude: [
+			'.DS_Store',
+			'.git*',
+			'node_modules',
+			'scss',
+			'src',
+			'haptiq.config.js',
+			'package.json',
+			'package-lock.json',
+			// Source maps: remove this line if you use an error monitoring tool
+			// (e.g. Sentry) that needs .map files to decode production stack traces
+			'*.map',
+		],
+
+		// Remove remote files that no longer exist locally (rsync --delete)
+		delete: true,
+
+		targets: {
+			// `kit ship dist` is always available without any config entry.
+			// It outputs to ../project-name-dist/ beside the project folder.
+			// Only add a dist entry here if you need to override defaults, e.g.:
+			// dist: { dev: true },
+
+			// Staging server — dev: true means assets are always built unminified
+			staging: {
+				host: 'user@staging.example.com',
+				dest: '/path/to/staging/',
+				dev: true,
+			},
+
+			// Production server — production build (minified)
+			prod: {
+				host: 'user@example.com',
+				dest: '/path/to/live/',
+			},
+		},
+	},
 };

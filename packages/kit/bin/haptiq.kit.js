@@ -21,6 +21,7 @@ import path from 'path';
 import packageJson from '../package.json' with { type: 'json' };
 import { buildCSS } from '../lib/css.js';
 import { buildJS } from '../lib/js.js';
+import { ship } from '../lib/ship.js';
 
 const { version } = packageJson;
 
@@ -80,6 +81,31 @@ async function loadConfig(verbose = false) {
 			}
 		}
 
+		// Validate ship config structure if present
+		if (config.ship) {
+			if (typeof config.ship !== 'object' || Array.isArray(config.ship)) {
+				throw new Error('ship configuration must be an object');
+			}
+
+			if (config.ship.targets) {
+				if (typeof config.ship.targets !== 'object' || Array.isArray(config.ship.targets)) {
+					throw new Error('ship.targets must be an object');
+				}
+
+				for (const [targetName, targetConfig] of Object.entries(config.ship.targets)) {
+					if (targetConfig.dest && typeof targetConfig.dest !== 'string') {
+						throw new Error(`ship.targets.${targetName}.dest must be a string`);
+					}
+					if (targetConfig.host && typeof targetConfig.host !== 'string') {
+						throw new Error(`ship.targets.${targetName}.host must be a string`);
+					}
+					if (targetConfig.dev !== undefined && typeof targetConfig.dev !== 'boolean') {
+						throw new Error(`ship.targets.${targetName}.dev must be a boolean (true or false, not a string)`);
+					}
+				}
+			}
+		}
+
 		return config;
 	} catch (configError) {
 		// ERR_MODULE_NOT_FOUND is the ESM equivalent of MODULE_NOT_FOUND
@@ -107,10 +133,12 @@ async function loadConfig(verbose = false) {
  * @returns {Function} Command handler function for commander.js
  */
 function createCommandHandler(taskName, taskFunction) {
-	return async (options) => {
+	return async (...args) => {
+		const options = args[args.length - 1];
+		const positionalArgs = args.slice(0, -1);
 		try {
 			const config = await loadConfig(options.verbose);
-			await taskFunction(config, options);
+			await taskFunction(config, options, ...positionalArgs);
 		} catch (error) {
 			console.error(`❌ ${taskName} failed:`, error.message);
 			process.exit(1);
@@ -142,6 +170,15 @@ program
 	.option('--skip <name>', 'Skip the named configuration')
 	.action(createCommandHandler('JavaScript build', async (config, options) => {
 		await buildJS(config, options.verbose, { only: options.only, skip: options.skip, dev: options.dev });
+	}));
+
+program
+	.command('ship [target]')
+	.description('Build assets and ship to remote server via rsync')
+	.option('--dev', 'Build without minification before shipping')
+	.option('--verbose', 'Show detailed output')
+	.action(createCommandHandler('Ship', async (config, options, target) => {
+		await ship(config, options.verbose, { target, dev: options.dev });
 	}));
 
 program.parse();
