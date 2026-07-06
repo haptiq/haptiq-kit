@@ -143,11 +143,13 @@ function rsyncDryRun(args) {
 
 		let stdout = '';
 		let stderr = '';
+		let rejected = false;
 
 		childProcess.stdout.on('data', (data) => { stdout += data.toString(); });
 		childProcess.stderr.on('data', (data) => { stderr += data.toString(); });
 
 		childProcess.on('close', (code) => {
+			if (rejected) return;
 			if (code === 0) {
 				const deletions = stdout
 					.split('\n')
@@ -160,6 +162,7 @@ function rsyncDryRun(args) {
 		});
 
 		childProcess.on('error', (err) => {
+			rejected = true;
 			if (err.code === 'ENOENT') {
 				reject(new Error('rsync not found. Please ensure rsync is installed on your system.'));
 			} else {
@@ -231,6 +234,7 @@ function spawnRsync(args, verbose) {
 		const childProcess = spawn('rsync', args, { shell: false });
 
 		let stderr = '';
+		let rejected = false;
 
 		if (verbose) {
 			childProcess.stdout.on('data', (data) => process.stdout.write(data));
@@ -241,6 +245,7 @@ function spawnRsync(args, verbose) {
 		});
 
 		childProcess.on('close', (code) => {
+			if (rejected) return;
 			if (code === 0) {
 				resolve();
 			} else {
@@ -249,6 +254,7 @@ function spawnRsync(args, verbose) {
 		});
 
 		childProcess.on('error', (err) => {
+			rejected = true;
 			if (err.code === 'ENOENT') {
 				reject(new Error('rsync not found. Please ensure rsync is installed on your system.'));
 			} else {
