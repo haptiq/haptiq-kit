@@ -96,6 +96,12 @@ async function shipSingleTarget(name, targetConfig, shipConfig, verbose) {
 		destination = localDest;
 	}
 
+	const projectRoot = process.cwd();
+	const resolvedSrc = path.resolve(projectRoot, src);
+	if (resolvedSrc !== projectRoot && !resolvedSrc.startsWith(projectRoot + path.sep)) {
+		throw new Error(`ship.src must be inside the project root. Got: ${resolvedSrc}`);
+	}
+
 	const normalizedSrc = src.endsWith('/') ? src : `${src}/`;
 
 	const args = [
