@@ -52,70 +52,37 @@ kit js --skip <name>   # skip a named config (multi-config mode)
 
 **Defaults:** reads `src/**/*.js`, writes to `js/bundle.js`.
 
-## Configuration
+---
 
-Create a `haptiq.config.js` in your project root. All options are optional.
+### `kit ship [target]`
 
-```js
-module.exports = {
-  css: {
-    src: 'assets/**/*.{scss,sass,css}',  // default: 'src/**/*.{scss,sass,css}'
-    dest: 'public/css',                  // default: 'css'
-    sass: {
-      style: 'expanded',
-      includePaths: ['node_modules'],
-    },
-    lightning: {
-      targets: { chrome: 90, firefox: 88, safari: 14 },
-      minify: true,
-      sourceMap: true,
-    },
-  },
-
-  // Combine mode — all files into one output
-  js: {
-    src: 'assets/**/*.js',       // default: 'src/**/*.js'
-    dest: 'public/js/bundle.js', // default: 'js/bundle.js'
-    terser: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-      format: {
-        comments: false,
-      },
-    },
-  },
-};
-```
-
-### Multiple JS configs
-
-Use `js.configs` to define several named configurations:
-
-```js
-module.exports = {
-  js: {
-    configs: {
-      'app': {
-        src: 'src/app/**/*.js',
-        dest: 'public/js/app.bundle.js',
-      },
-      'components': {
-        src: 'src/components/**/*.js',
-        dest: 'public/js/components/',
-      },
-    },
-  },
-};
-```
-
-Then use `--only` / `--skip` to target specific configs:
+Builds CSS and JS assets, then syncs them to a destination via rsync or packages them as a zip archive.
 
 ```sh
-kit js --only app
-kit js --skip components
+kit ship              # prompts you to choose a target
+kit ship staging      # ship to a specific named target
+kit ship dist         # built-in local target (always available, no config needed)
+kit ship --dev        # build without minification before shipping
+kit ship --verbose    # show detailed rsync/zip output
 ```
+
+When called without a target name, the command lists all configured targets and asks you to choose one before proceeding. To skip the prompt, pass the target name directly.
+
+`kit ship dist` syncs the project to a sibling directory (`../project-name-dist/`) and is always available without any configuration.
+
+**Target types**
+
+| Type | Config | Behaviour |
+|---|---|---|
+| Remote | `host` + `dest` | rsyncs `src` to `host:dest` |
+| Local | neither | rsyncs `src` to `../project-name-dist/` (same as `kit ship dist`) |
+| Zip | `zip` path | packages `src` into a zip archive |
+
+`zip` is mutually exclusive with `host` and `dest`. The zip destination directory must exist; the command aborts if the archive already exists (remove it manually to re-ship).
+
+## Configuration
+
+Create a `haptiq.config.js` in your project root. All options are optional. See [`examples/haptiq.config.js`](examples/haptiq.config.js) for a full annotated reference.
 
 ## License
 
