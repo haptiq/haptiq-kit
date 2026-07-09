@@ -1,5 +1,11 @@
 # @haptiq/kit
 
+## 0.7.0
+
+### Minor Changes
+
+- e713175: Add zip option to ship command + fix documentation
+
 ## 0.6.0
 
 ### Minor Changes
