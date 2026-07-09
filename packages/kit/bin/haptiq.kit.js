@@ -110,6 +110,15 @@ async function loadConfig(verbose = false) {
 					if (targetConfig.dev !== undefined && typeof targetConfig.dev !== 'boolean') {
 						throw new Error(`ship.targets.${targetName}.dev must be a boolean (true or false, not a string)`);
 					}
+					if (targetConfig.zip !== undefined && typeof targetConfig.zip !== 'string') {
+						throw new Error(`ship.targets.${targetName}.zip must be a string`);
+					}
+					if (targetConfig.zip && targetConfig.host) {
+						throw new Error(`ship.targets.${targetName}: "zip" and "host" are mutually exclusive`);
+					}
+					if (targetConfig.zip && targetConfig.dest) {
+						throw new Error(`ship.targets.${targetName}: "zip" and "dest" are mutually exclusive`);
+					}
 				}
 			}
 		}

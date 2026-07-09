@@ -127,6 +127,15 @@ module.exports = {
 				host: 'user@example.com',
 				dest: '/path/to/live/',
 			},
+
+			// Zip archive — {name} and {version} are replaced at build time
+			archive: {
+				zip: '/path/to/releases/{name}-{version}.zip',
+			},
+			// Relative path possible as well (this puts it beside project root):
+			// archive: {
+			//   zip: '../{name}-{version}.zip',
+			// },
 		},
 	},
 };

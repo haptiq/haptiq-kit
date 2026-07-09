@@ -6,9 +6,11 @@
  * under the `ship` key.
  */
 import { spawn } from 'child_process';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import readline from 'readline';
 import path from 'path';
+import { glob } from 'glob';
+import { zipSync } from 'fflate';
 import { buildCSS } from './css.js';
 import { buildJS } from './js.js';
 
@@ -45,7 +47,8 @@ async function ship(config, verbose, options = {}) {
 		if (configuredTargetNames.length === 0) {
 			throw new Error('No ship targets configured. Add a ship.targets object to haptiq.config.js, or run `kit ship dist` for a local build.');
 		}
-		targetsToProcess = configuredTargetNames;
+		const selected = await promptTarget(configuredTargetNames);
+		targetsToProcess = [selected];
 	}
 
 	for (const name of targetsToProcess) {
@@ -54,10 +57,83 @@ async function ship(config, verbose, options = {}) {
 
 		await buildCSS(config, verbose, dev);
 		await buildJS(config, verbose, { dev });
-		await shipSingleTarget(name, targetConfig, { src, exclude, deleteRemoved }, verbose);
+
+		if (targetConfig.zip) {
+			await zipSingleTarget(name, targetConfig, { src, exclude }, verbose);
+		} else {
+			await shipSingleTarget(name, targetConfig, { src, exclude, deleteRemoved }, verbose);
+		}
 
 		console.log(`✅ Shipped to [${name}].`);
 	}
+}
+
+
+/**
+ * Zip a single target — builds a zip archive at the configured path.
+ * Aborts if the destination directory does not exist or the zip file already exists.
+ *
+ * @param {string} name - Target name (for log messages)
+ * @param {{ zip: string }} targetConfig - Target settings
+ * @param {{ src: string, exclude: string[] }} shipConfig - Shared settings
+ * @param {boolean} verbose - List each file added to the archive
+ * @returns {Promise<void>}
+ */
+async function zipSingleTarget(name, targetConfig, shipConfig, verbose) {
+	const { zip: zipPathTemplate } = targetConfig;
+	const { src = './', exclude = [] } = shipConfig;
+
+	const projectRoot = process.cwd();
+	const projectName = path.basename(projectRoot);
+
+	let version = '0.0.0';
+	const pkgPath = path.join(projectRoot, 'package.json');
+	if (existsSync(pkgPath)) {
+		try {
+			const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
+			version = pkg.version ?? version;
+		} catch { /* use default */ }
+	}
+
+	const resolvedZipPath = zipPathTemplate
+		.replace(/\{name\}/g, projectName)
+		.replace(/\{version\}/g, version);
+
+	const zipDir = path.dirname(resolvedZipPath);
+	if (!existsSync(zipDir)) {
+		throw new Error(`Destination directory does not exist: ${zipDir}\nCreate it manually before shipping.`);
+	}
+
+	if (existsSync(resolvedZipPath)) {
+		throw new Error(`Zip archive already exists: ${resolvedZipPath}\nRemove it manually before shipping to avoid accidental overwrites.`);
+	}
+
+	const resolvedSrc = path.resolve(projectRoot, src);
+
+	const globIgnore = exclude.flatMap(e => {
+		const stripped = e.replace(/\/$/, '');
+		return [stripped, `${stripped}/**`];
+	});
+
+	console.log(`📦 Packing [${name}] → ${resolvedZipPath}`);
+
+	const files = await glob('**', {
+		cwd: resolvedSrc,
+		dot: true,
+		nodir: true,
+		ignore: globIgnore,
+	});
+
+	const zipData = {};
+	for (const file of files) {
+		if (verbose) {
+			process.stdout.write(`  ${file}\n`);
+		}
+		zipData[`${projectName}/${file}`] = readFileSync(path.join(resolvedSrc, file));
+	}
+
+	const zipped = zipSync(zipData);
+	writeFileSync(resolvedZipPath, zipped);
 }
 
 
@@ -207,14 +283,45 @@ async function confirmDeletion(deletions, destination) {
 
 
 /**
+ * Prompt the user to choose a ship target from the available options.
+ * Accepts either the target name or its list number.
+ *
+ * @param {string[]} configuredTargetNames - Target names from haptiq.config.js
+ * @returns {Promise<string>} The chosen target name
+ */
+async function promptTarget(configuredTargetNames) {
+	const options = [...configuredTargetNames, 'dist'];
+
+	console.log('\nNo target specified. Choose one of the available targets to ship to:\n');
+	options.forEach((name, i) => {
+		console.log(`  ${i + 1}) ${name}`);
+	});
+
+	const answer = (await readLine('\nTarget: ')).trim();
+
+	const num = parseInt(answer, 10);
+	if (!isNaN(num) && num >= 1 && num <= options.length) {
+		return options[num - 1];
+	}
+
+	if (options.includes(answer)) {
+		return answer;
+	}
+
+	throw new Error(`"${answer}" is not a valid target. Run \`kit ship <target>\` to skip this prompt.`);
+}
+
+
+/**
  * Read a single line from stdin.
  *
+ * @param {string} prompt - Text to display before waiting for input
  * @returns {Promise<string>}
  */
-function readLine() {
+function readLine(prompt = '') {
 	return new Promise((resolve) => {
 		const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-		rl.question('', (answer) => {
+		rl.question(prompt, (answer) => {
 			rl.close();
 			resolve(answer);
 		});
