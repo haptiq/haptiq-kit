@@ -1,5 +1,11 @@
 # @haptiq/kit
 
+## 0.8.0
+
+### Minor Changes
+
+- f5efeef: Add `kit version` command to bump version in package.json and configured files.
+
 ## 0.7.0
 
 ### Minor Changes
