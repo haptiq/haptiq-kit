@@ -22,6 +22,7 @@ import packageJson from '../package.json' with { type: 'json' };
 import { buildCSS } from '../lib/css.js';
 import { buildJS } from '../lib/js.js';
 import { ship } from '../lib/ship.js';
+import { bumpVersion } from '../lib/version.js';
 
 const { version } = packageJson;
 
@@ -123,6 +124,33 @@ async function loadConfig(verbose = false) {
 			}
 		}
 
+		// Validate version config structure if present
+		if (config.version) {
+			if (typeof config.version !== 'object' || Array.isArray(config.version)) {
+				throw new Error('version configuration must be an object');
+			}
+
+			if (config.version.files !== undefined) {
+				if (!Array.isArray(config.version.files)) {
+					throw new Error('version.files must be an array');
+				}
+
+				const validTypes = ['plugin-header', 'style-header', 'stable-tag', 'php-constant'];
+
+				for (const [i, entry] of config.version.files.entries()) {
+					if (!entry.path || typeof entry.path !== 'string') {
+						throw new Error(`version.files[${i}].path must be a non-empty string`);
+					}
+					if (!entry.type || !validTypes.includes(entry.type)) {
+						throw new Error(`version.files[${i}].type must be one of: ${validTypes.join(', ')}`);
+					}
+					if (entry.type === 'php-constant' && !entry.constant) {
+						throw new Error(`version.files[${i}]: "constant" field is required for type "php-constant"`);
+					}
+				}
+			}
+		}
+
 		return config;
 	} catch (configError) {
 		// ERR_MODULE_NOT_FOUND is the ESM equivalent of MODULE_NOT_FOUND
@@ -196,6 +224,14 @@ program
 	.option('--verbose', 'Show detailed output')
 	.action(createCommandHandler('Ship', async (config, options, target) => {
 		await ship(config, options.verbose, { target, dev: options.dev });
+	}));
+
+program
+	.command('version [bump]')
+	.description('Bump the project version in package.json and configured files')
+	.option('--force', 'Write an explicit version even if it is not valid semver')
+	.action(createCommandHandler('Version bump', async (config, options, bump) => {
+		await bumpVersion(config, bump ?? 'patch', options.force);
 	}));
 
 program.parse();
