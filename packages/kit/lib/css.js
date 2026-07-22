@@ -217,7 +217,12 @@ function processWithLightning(cssContent, file, cssConfig, verbose) {
 	const fileName = file.endsWith('.css')
 		? path.basename(file)
 		: path.basename(file, path.extname(file)) + '.css';
-	const outputPath = path.join(cssConfig.dest, fileName);
+
+	// Mirror the source folder structure relative to the glob's static base,
+	// so src/scss/blocks/foo.scss → <dest>/blocks/foo.css
+	const base = getGlobBase(cssConfig.src);
+	const relDir = path.dirname(path.relative(base, file));
+	const outputPath = path.join(cssConfig.dest, relDir, fileName);
 
 	fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 
@@ -237,6 +242,16 @@ function processWithLightning(cssContent, file, cssConfig, verbose) {
 	if (verbose) {
 		console.log(`  ✅ ${file} → ${outputPath}`);
 	}
+}
+
+
+/**
+ * Extract the static base directory from a glob pattern
+ */
+function getGlobBase(pattern) {
+	const parts = pattern.split('/');
+	const firstWild = parts.findIndex(p => /[*?{[]/.test(p));
+	return firstWild <= 0 ? '.' : parts.slice(0, firstWild).join('/');
 }
 
 
