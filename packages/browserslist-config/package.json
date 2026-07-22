@@ -1,6 +1,6 @@
 {
 	"name": "@haptiq/browserslist-config",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "Shared Browserslist configuration for Haptiq projects.",
 	"keywords": [
 		"browserslist",
