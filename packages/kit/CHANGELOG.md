@@ -1,5 +1,12 @@
 # @haptiq/kit
 
+## 0.9.1
+
+### Patch Changes
+
+- Updated dependencies [f112d61]
+  - @haptiq/browserslist-config@0.2.0
+
 ## 0.9.0
 
 ### Minor Changes
