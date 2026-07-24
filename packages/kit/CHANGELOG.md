@@ -1,5 +1,11 @@
 # @haptiq/kit
 
+## 0.11.0
+
+### Minor Changes
+
+- 99c5781: Auto-detect a conventional CSS source directory and skip empty output files
+
 ## 0.10.1
 
 ### Patch Changes
