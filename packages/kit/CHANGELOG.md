@@ -1,5 +1,11 @@
 # @haptiq/kit
 
+## 0.10.0
+
+### Minor Changes
+
+- 2ab7c1d: Add multi-config support to the css command.
+
 ## 0.9.1
 
 ### Patch Changes
