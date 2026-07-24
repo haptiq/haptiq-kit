@@ -39,7 +39,8 @@ async function buildCSS(config = {}, verbose = false, options = {}) {
 		console.log('🪄 CSS processing begins.');
 	}
 
-	let total = 0;
+	let processed = 0;
+	let empty = 0;
 
 	if (cssConfig.configs !== undefined) {
 		const configNames = Object.keys(cssConfig.configs);
@@ -61,7 +62,9 @@ async function buildCSS(config = {}, verbose = false, options = {}) {
 		}
 
 		for (const name of configsToProcess) {
-			total += await processSingleConfig(cssConfig.configs[name], resolvedTargets, verbose, dev);
+			const result = await processSingleConfig(cssConfig.configs[name], resolvedTargets, verbose, dev);
+			processed += result.processed;
+			empty += result.empty;
 			if (verbose) {
 				console.log(`  ✅ [${name}] done`);
 			}
@@ -70,15 +73,19 @@ async function buildCSS(config = {}, verbose = false, options = {}) {
 		if (options.only || options.skip) {
 			console.warn('⚠️  --only and --skip have no effect with a single configuration');
 		}
-		total = await processSingleConfig(cssConfig, resolvedTargets, verbose, dev);
+		({ processed, empty } = await processSingleConfig(cssConfig, resolvedTargets, verbose, dev));
 	}
 
-	if (total === 0) {
+	if (processed === 0 && empty === 0) {
 		console.log('ℹ️  No CSS/SCSS files found');
 		return;
 	}
 
-	console.log(`✅ ${total} CSS files processed.`);
+	let summary = `✅ ${processed} CSS files processed.`;
+	if (empty > 0) {
+		summary += ` ${empty} empty file${empty === 1 ? '' : 's'} ignored.`;
+	}
+	console.log(summary);
 }
 
 
@@ -154,7 +161,7 @@ async function processSingleConfig(rawConfig, resolvedTargets, verbose, dev) {
 	const totalFiles = sassSourceFiles.length + cssFiles.length;
 
 	if (totalFiles === 0) {
-		return 0;
+		return { processed: 0, empty: 0 };
 	}
 
 	// A single-file dest can only receive one compiled file — CSS has no bundling.
@@ -166,17 +173,22 @@ async function processSingleConfig(rawConfig, resolvedTargets, verbose, dev) {
 		console.log(`📦 Found ${sassSourceFiles.length} SCSS/Sass and ${cssFiles.length} CSS files to process`);
 	}
 
+	let processed = 0;
+	let empty = 0;
+
 	// Stage 1: SCSS/Sass → compile + post-process
 	for (const file of sassSourceFiles) {
-		await processSingleSassFile(file, cssConfig, verbose, destIsFile);
+		if (await processSingleSassFile(file, cssConfig, verbose, destIsFile)) processed++;
+		else empty++;
 	}
 
 	// Stage 2: pure CSS → post-process only
 	for (const file of cssFiles) {
-		await processSingleCSSFile(file, cssConfig, verbose, destIsFile);
+		if (await processSingleCSSFile(file, cssConfig, verbose, destIsFile)) processed++;
+		else empty++;
 	}
 
-	return totalFiles;
+	return { processed, empty };
 }
 
 
@@ -215,7 +227,7 @@ async function processSingleSassFile(file, cssConfig, verbose = false, destIsFil
 		};
 
 		const result = sass.compile(file, sassOptions);
-		await processWithLightning(result.css, file, cssConfig, verbose, destIsFile);
+		return processWithLightning(result.css, file, cssConfig, verbose, destIsFile);
 
 	} catch (error) {
 		// Use basename to avoid exposing internal file paths in error messages
@@ -247,7 +259,7 @@ async function processSingleCSSFile(file, cssConfig, verbose = false, destIsFile
 		}
 
 		const css = fs.readFileSync(file, 'utf8');
-		await processWithLightning(css, file, cssConfig, verbose, destIsFile);
+		return processWithLightning(css, file, cssConfig, verbose, destIsFile);
 
 	} catch (error) {
 		// Use basename to avoid exposing internal file paths in error messages
@@ -271,7 +283,7 @@ async function processSingleCSSFile(file, cssConfig, verbose = false, destIsFile
  * @param {Object} cssConfig - CSS configuration object
  * @param {boolean} verbose - Show detailed processing logs
  * @param {boolean} destIsFile - dest targets one specific output file
- * @returns {void}
+ * @returns {boolean} Whether an output file was written (false = skipped as empty)
  */
 function processWithLightning(cssContent, file, cssConfig, verbose, destIsFile = false) {
 	const result = transform({
@@ -279,6 +291,16 @@ function processWithLightning(cssContent, file, cssConfig, verbose, destIsFile =
 		code: Buffer.from(cssContent),
 		filename: file
 	});
+
+	// A source that compiles to no meaningful CSS (e.g. a placeholder partial with
+	// only comments, which minification strips) would produce an empty file that
+	// then gets loaded for nothing. Skip the write; the count is reported at the end.
+	if (result.code.toString().trim() === '') {
+		if (verbose) {
+			console.warn(`  ⚠️ ${file} produced empty CSS — nothing written`);
+		}
+		return false;
+	}
 
 	let outputPath;
 	if (destIsFile) {
@@ -315,6 +337,8 @@ function processWithLightning(cssContent, file, cssConfig, verbose, destIsFile =
 	if (verbose) {
 		console.log(`  ✅ ${file} → ${outputPath}`);
 	}
+
+	return true;
 }
 
 
