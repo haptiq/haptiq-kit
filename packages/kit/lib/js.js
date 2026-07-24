@@ -25,16 +25,22 @@ async function buildJS(config = {}, verbose = false, options = {}) {
 	const jsConfig = config.js || {};
 	const hasMultipleConfigs = jsConfig.configs !== undefined;
 
+	let total = 0;
+
 	if (hasMultipleConfigs) {
-		await processMultipleConfigs(jsConfig.configs, verbose, options);
+		total = await processMultipleConfigs(jsConfig.configs, verbose, options);
 	} else {
 		if (options.only || options.skip) {
 			console.warn('⚠️  --only and --skip have no effect with a single configuration');
 		}
-		await processSingleConfig(jsConfig, verbose, options.dev ?? false);
+		total = await processSingleConfig(jsConfig, verbose, options.dev ?? false);
 	}
 
-	console.log(`✅ JavaScript processing completed.`);
+	if (total === 0) {
+		return;
+	}
+
+	console.log(`✅ ${total} JavaScript files processed.`);
 }
 
 
@@ -44,7 +50,7 @@ async function buildJS(config = {}, verbose = false, options = {}) {
  * @param {Object} configs - Object with named configurations
  * @param {boolean} verbose - Show detailed processing logs
  * @param {{ only?: string, skip?: string, dev?: boolean }} options - CLI filter options
- * @returns {Promise<void>}
+ * @returns {Promise<number>} Number of files processed
  */
 async function processMultipleConfigs(configs, verbose, options = {}) {
 	const dev = options.dev ?? false;
@@ -67,12 +73,16 @@ async function processMultipleConfigs(configs, verbose, options = {}) {
 		console.log(`📦 Processing ${configsToProcess.length} JavaScript configurations: ${configsToProcess.join(', ')}`);
 	}
 
+	let total = 0;
+
 	for (const configName of configsToProcess) {
-		await processSingleConfig(configs[configName], verbose, dev);
+		total += await processSingleConfig(configs[configName], verbose, dev);
 		if (verbose) {
 			console.log(`  ✅ [${configName}] done`);
 		}
 	}
+
+	return total;
 }
 
 
@@ -81,7 +91,7 @@ async function processMultipleConfigs(configs, verbose, options = {}) {
  *
  * @param {Object} jsConfig - Single JS configuration object
  * @param {boolean} verbose - Show detailed processing logs
- * @returns {Promise<void>}
+ * @returns {Promise<number>} Number of files processed
  */
 async function processSingleConfig(jsConfig, verbose, dev = false) {
 	const dest = jsConfig.dest || 'js/bundle.js';
@@ -137,7 +147,7 @@ async function processSingleConfig(jsConfig, verbose, dev = false) {
 
 	if (allFiles.length === 0) {
 		console.log('ℹ️  No JavaScript files found');
-		return;
+		return 0;
 	}
 
 	if (verbose) {
@@ -145,6 +155,8 @@ async function processSingleConfig(jsConfig, verbose, dev = false) {
 	}
 
 	await processWithTerser(allFiles, mergedConfig, verbose);
+
+	return allFiles.length;
 }
 
 
