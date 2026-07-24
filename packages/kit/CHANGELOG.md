@@ -1,5 +1,11 @@
 # @haptiq/kit
 
+## 0.10.1
+
+### Patch Changes
+
+- 46ee232: Skip writing CSS files that compile to empty output
+
 ## 0.10.0
 
 ### Minor Changes
