@@ -18,13 +18,6 @@ module.exports = {
 		// static base of src, so src/styles/blocks/hero.scss → assets/css/blocks/hero.css
 		dest: 'assets/css',
 
-		// Sass compilation options
-		sass: {
-			style: 'expanded',           // 'expanded' | 'compressed'
-			sourceMap: false,            // Let LightningCSS handle source maps
-			includePaths: ['node_modules'] // Additional include paths
-		},
-
 		// LightningCSS optimization options
 		lightning: {
 			// Browser targets for autoprefixing
