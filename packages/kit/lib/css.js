@@ -16,24 +16,82 @@ import haptiqBrowserslistConfig from '@haptiq/browserslist-config';
 /**
  * Main CSS build function that processes SCSS, Sass, and CSS files
  *
- * Workflow:
- * 1. SCSS/Sass files: Compile to CSS → Process with LightningCSS
- * 2. CSS files: Process directly with LightningCSS
- * 3. Output: Minified CSS + source maps
+ * Supports both a single configuration and multiple named configurations.
+ * See examples in ../examples/haptiq.config.js
  *
  * @param {Object} config - Configuration object from haptiq.config.js
  * @param {boolean} verbose - Show detailed processing logs
- * @param {boolean} dev - Skip minification (--dev flag)
+ * @param {{ only?: string, skip?: string, dev?: boolean }} options - CLI filter options
  * @returns {Promise<void>}
  * @see {@link ../examples/haptiq.config.js} for all available options
  */
-async function buildCSS(config = {}, verbose = false, dev = false) {
+async function buildCSS(config = {}, verbose = false, options = {}) {
+	const dev = options.dev ?? false;
+	const cssConfig = config.css || {};
+
 	// Use project's own browserslist config if present, otherwise fall back to @haptiq/browserslist-config
 	const projectConfig = browserslist.loadConfig({ path: process.cwd() });
 	const resolvedTargets = browserslistToTargets(
 		browserslist(projectConfig ?? haptiqBrowserslistConfig, { path: process.cwd() })
 	);
 
+	if (verbose) {
+		console.log('🪄 CSS processing begins.');
+	}
+
+	let total = 0;
+
+	if (cssConfig.configs !== undefined) {
+		const configNames = Object.keys(cssConfig.configs);
+		let configsToProcess = configNames;
+
+		if (options.only) {
+			configsToProcess = configNames.filter(name => name === options.only);
+			if (configsToProcess.length === 0) {
+				throw new Error(`Configuration "${options.only}" not found. Available: ${configNames.join(', ')}`);
+			}
+		}
+
+		if (options.skip) {
+			configsToProcess = configsToProcess.filter(name => name !== options.skip);
+		}
+
+		if (verbose) {
+			console.log(`📦 Processing ${configsToProcess.length} CSS configurations: ${configsToProcess.join(', ')}`);
+		}
+
+		for (const name of configsToProcess) {
+			total += await processSingleConfig(cssConfig.configs[name], resolvedTargets, verbose, dev);
+			if (verbose) {
+				console.log(`  ✅ [${name}] done`);
+			}
+		}
+	} else {
+		if (options.only || options.skip) {
+			console.warn('⚠️  --only and --skip have no effect with a single configuration');
+		}
+		total = await processSingleConfig(cssConfig, resolvedTargets, verbose, dev);
+	}
+
+	if (total === 0) {
+		console.log('ℹ️  No CSS/SCSS files found');
+		return;
+	}
+
+	console.log(`✅ ${total} CSS files processed.`);
+}
+
+
+/**
+ * Process a single CSS configuration
+ *
+ * @param {Object} rawConfig - A single CSS config (src/dest/sass/lightning)
+ * @param {Object} resolvedTargets - LightningCSS browser targets
+ * @param {boolean} verbose - Show detailed processing logs
+ * @param {boolean} dev - Skip minification (--dev flag)
+ * @returns {Promise<number>} Number of files created
+ */
+async function processSingleConfig(rawConfig, resolvedTargets, verbose, dev) {
 	const defaultLightningConfig = {
 		targets: resolvedTargets,
 		minify: !dev,
@@ -43,10 +101,10 @@ async function buildCSS(config = {}, verbose = false, dev = false) {
 	const cssConfig = {
 		src: 'src/**/*.{scss,sass,css}',
 		dest: 'css',
-		...config.css,
+		...rawConfig,
 		lightning: {
 			...defaultLightningConfig,
-			...config.css?.lightning,
+			...rawConfig?.lightning,
 			...(dev && { minify: false })
 		}
 	};
@@ -74,11 +132,13 @@ async function buildCSS(config = {}, verbose = false, dev = false) {
 
 	cssConfig.dest = path.relative(projectRoot, safeDest);
 
-	if (verbose) {
-		console.log('🪄 CSS processing begins.');
-	}
+	// A dest ending in a file extension (and not a trailing slash) targets one
+	// specific output file rather than a directory — used to rename output.
+	const destIsFile = !cssConfig.dest.endsWith('/') && path.extname(cssConfig.dest) !== '';
 
-	const allFiles = globSync(cssConfig.src, { cwd: process.cwd() });
+	// Ignore Sass partials (leading underscore); they are only ever @use/@import-ed,
+	// never compiled to standalone CSS. Matches Dart Sass' own convention.
+	const allFiles = globSync(cssConfig.src, { cwd: process.cwd(), ignore: '**/_*.{scss,sass}' });
 
 	// Limit file count to prevent resource exhaustion
 	const MAX_FILES = 100;
@@ -94,8 +154,12 @@ async function buildCSS(config = {}, verbose = false, dev = false) {
 	const totalFiles = sassSourceFiles.length + cssFiles.length;
 
 	if (totalFiles === 0) {
-		console.log('ℹ️  No CSS/SCSS files found');
-		return;
+		return 0;
+	}
+
+	// A single-file dest can only receive one compiled file — CSS has no bundling.
+	if (destIsFile && totalFiles > 1) {
+		throw new Error(`Destination "${cssConfig.dest}" is a single file but ${totalFiles} source files matched. Use a directory dest, or narrow the src pattern to one file.`);
 	}
 
 	if (verbose) {
@@ -104,15 +168,15 @@ async function buildCSS(config = {}, verbose = false, dev = false) {
 
 	// Stage 1: SCSS/Sass → compile + post-process
 	for (const file of sassSourceFiles) {
-		await processSingleSassFile(file, cssConfig, verbose);
+		await processSingleSassFile(file, cssConfig, verbose, destIsFile);
 	}
 
 	// Stage 2: pure CSS → post-process only
 	for (const file of cssFiles) {
-		await processSingleCSSFile(file, cssConfig, verbose);
+		await processSingleCSSFile(file, cssConfig, verbose, destIsFile);
 	}
 
-	console.log(`✅ ${totalFiles} CSS files were created.`);
+	return totalFiles;
 }
 
 
@@ -126,9 +190,10 @@ async function buildCSS(config = {}, verbose = false, dev = false) {
  * @param {string} file - Path to the SCSS/Sass file
  * @param {Object} cssConfig - CSS configuration object
  * @param {boolean} verbose - Show detailed processing logs
+ * @param {boolean} destIsFile - dest targets one specific output file
  * @returns {Promise<void>}
  */
-async function processSingleSassFile(file, cssConfig, verbose = false) {
+async function processSingleSassFile(file, cssConfig, verbose = false, destIsFile = false) {
 	try {
 		// Limit file size to prevent memory exhaustion during processing
 		const stats = fs.statSync(file);
@@ -150,7 +215,7 @@ async function processSingleSassFile(file, cssConfig, verbose = false) {
 		};
 
 		const result = sass.compile(file, sassOptions);
-		await processWithLightning(result.css, file, cssConfig, verbose);
+		await processWithLightning(result.css, file, cssConfig, verbose, destIsFile);
 
 	} catch (error) {
 		// Use basename to avoid exposing internal file paths in error messages
@@ -168,9 +233,10 @@ async function processSingleSassFile(file, cssConfig, verbose = false) {
  * @param {string} file - Path to the CSS file
  * @param {Object} cssConfig - CSS configuration object
  * @param {boolean} verbose - Show detailed processing logs
+ * @param {boolean} destIsFile - dest targets one specific output file
  * @returns {Promise<void>}
  */
-async function processSingleCSSFile(file, cssConfig, verbose = false) {
+async function processSingleCSSFile(file, cssConfig, verbose = false, destIsFile = false) {
 	try {
 		// Limit file size to prevent memory exhaustion during processing
 		const stats = fs.statSync(file);
@@ -181,7 +247,7 @@ async function processSingleCSSFile(file, cssConfig, verbose = false) {
 		}
 
 		const css = fs.readFileSync(file, 'utf8');
-		await processWithLightning(css, file, cssConfig, verbose);
+		await processWithLightning(css, file, cssConfig, verbose, destIsFile);
 
 	} catch (error) {
 		// Use basename to avoid exposing internal file paths in error messages
@@ -204,25 +270,32 @@ async function processSingleCSSFile(file, cssConfig, verbose = false) {
  * @param {string} file - Original file path (for source maps)
  * @param {Object} cssConfig - CSS configuration object
  * @param {boolean} verbose - Show detailed processing logs
+ * @param {boolean} destIsFile - dest targets one specific output file
  * @returns {void}
  */
-function processWithLightning(cssContent, file, cssConfig, verbose) {
+function processWithLightning(cssContent, file, cssConfig, verbose, destIsFile = false) {
 	const result = transform({
 		...cssConfig.lightning,
 		code: Buffer.from(cssContent),
 		filename: file
 	});
 
-	// Convert .scss/.sass extension to .css for the output file
-	const fileName = file.endsWith('.css')
-		? path.basename(file)
-		: path.basename(file, path.extname(file)) + '.css';
+	let outputPath;
+	if (destIsFile) {
+		// dest is an explicit output file — write there verbatim (allows renaming)
+		outputPath = cssConfig.dest;
+	} else {
+		// Convert .scss/.sass extension to .css for the output file
+		const fileName = file.endsWith('.css')
+			? path.basename(file)
+			: path.basename(file, path.extname(file)) + '.css';
 
-	// Mirror the source folder structure relative to the glob's static base,
-	// so src/scss/blocks/foo.scss → <dest>/blocks/foo.css
-	const base = getGlobBase(cssConfig.src);
-	const relDir = path.dirname(path.relative(base, file));
-	const outputPath = path.join(cssConfig.dest, relDir, fileName);
+		// Mirror the source folder structure relative to the glob's static base,
+		// so src/scss/blocks/foo.scss → <dest>/blocks/foo.css
+		const base = getGlobBase(cssConfig.src);
+		const relDir = path.dirname(path.relative(base, file));
+		outputPath = path.join(cssConfig.dest, relDir, fileName);
+	}
 
 	fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 

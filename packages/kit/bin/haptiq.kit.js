@@ -202,8 +202,10 @@ program
 	.description('Build CSS from Sass and CSS files')
 	.option('--dev', 'Build without minification')
 	.option('--verbose', 'Show detailed output for each file processed')
+	.option('--only <name>', 'Only run the named configuration')
+	.option('--skip <name>', 'Skip the named configuration')
 	.action(createCommandHandler('CSS build', async (config, options) => {
-		await buildCSS(config, options.verbose, options.dev);
+		await buildCSS(config, options.verbose, { only: options.only, skip: options.skip, dev: options.dev });
 	}));
 
 program
