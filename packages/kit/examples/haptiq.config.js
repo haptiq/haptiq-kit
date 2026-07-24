@@ -9,9 +9,13 @@ module.exports = {
 	// CSS Configuration
 	css: {
 		// Source files pattern (default: 'src/**/*.{scss,sass,css}')
+		// Sass partials (files with a leading underscore, e.g. _colors.scss) are
+		// always ignored — they are only ever @use/@import-ed, never compiled alone.
 		src: 'src/styles/**/*.{scss,sass,css}',
 
 		// Output directory (default: 'css')
+		// The source folder structure is mirrored under dest relative to the
+		// static base of src, so src/styles/blocks/hero.scss → assets/css/blocks/hero.css
 		dest: 'assets/css',
 
 		// Sass compilation options
@@ -44,6 +48,27 @@ module.exports = {
 			customMedia: true
 		}
 	},
+
+	// CSS Configuration — multiple named configs
+	// Use when different source groups need different output roots or options.
+	// Filter with `kit css --only <name>` / `kit css --skip <name>`.
+	//
+	// NOTE: each named config is self-contained — top-level `sass`/`lightning`
+	// options are NOT inherited by the configs. Put per-config options (e.g.
+	// `lightning.minify`) inside each config. This also means you can emit the
+	// same source twice with different settings (e.g. minified + unminified).
+	// css: {
+	//   configs: {
+	//     // Single-file src + a dest ending in .css writes that exact file (rename).
+	//     'main':   { src: 'src/scss/main.scss',    dest: 'assets/css/theme.css' },
+	//     // Directory dest mirrors the source tree beneath it.
+	//     'root':   { src: 'src/scss/*.scss',        dest: 'assets/css' },
+	//     'blocks': { src: 'src/scss/blocks/*.scss', dest: 'assets/css/blocks' },
+	//     // Same source, unminified, to a separate file:
+	//     'main-dev': { src: 'src/scss/main.scss', dest: 'assets/css/theme.dev.css',
+	//                   lightning: { minify: false } },
+	//   }
+	// },
 
 	// JavaScript Configuration — combine mode (all files into one output)
 	js: {
