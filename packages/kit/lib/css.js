@@ -106,7 +106,6 @@ async function processSingleConfig(rawConfig, resolvedTargets, verbose, dev) {
 	};
 
 	const cssConfig = {
-		src: 'src/**/*.{scss,sass,css}',
 		dest: 'css',
 		...rawConfig,
 		lightning: {
@@ -117,6 +116,13 @@ async function processSingleConfig(rawConfig, resolvedTargets, verbose, dev) {
 	};
 
 	const projectRoot = process.cwd();
+
+	// No src configured — auto-detect a conventional source directory inside src/
+	// (styles, scss, …) and use it as the base, so its files map straight into dest
+	// without an extra nested folder. Falls back to scanning all of src/.
+	if (cssConfig.src === undefined) {
+		cssConfig.src = resolveDefaultSrc(projectRoot, verbose);
+	}
 
 	if (typeof cssConfig.src !== 'string') {
 		throw new Error('Source pattern must be a string');
@@ -339,6 +345,36 @@ function processWithLightning(cssContent, file, cssConfig, verbose, destIsFile =
 	}
 
 	return true;
+}
+
+
+/**
+ * Resolve the default src glob when none is configured.
+ *
+ * Prefers a conventional source directory inside src/ so its contents map
+ * directly into dest (e.g. src/styles/main.scss → css/main.css instead of
+ * css/styles/main.css). Precedence, most-conventional first, ambiguous last:
+ * styles → scss → sass → style → css. Falls back to all of src/.
+ *
+ * @param {string} projectRoot - Absolute project directory
+ * @param {boolean} verbose - Show which pattern was auto-detected
+ * @returns {string} A relative glob pattern
+ */
+function resolveDefaultSrc(projectRoot, verbose) {
+	const candidates = ['styles', 'scss', 'sass', 'style', 'css'];
+
+	for (const dir of candidates) {
+		const candidatePath = path.join(projectRoot, 'src', dir);
+		if (fs.existsSync(candidatePath) && fs.statSync(candidatePath).isDirectory()) {
+			const pattern = `src/${dir}/**/*.{scss,sass,css}`;
+			if (verbose) {
+				console.log(`🔍 No src configured — using ${pattern}`);
+			}
+			return pattern;
+		}
+	}
+
+	return 'src/**/*.{scss,sass,css}';
 }
 
 
