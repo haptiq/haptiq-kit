@@ -1,5 +1,11 @@
 # @haptiq/kit
 
+## 0.12.0
+
+### Minor Changes
+
+- 2bcd326: Add default excludes to ship command
+
 ## 0.11.0
 
 ### Minor Changes
