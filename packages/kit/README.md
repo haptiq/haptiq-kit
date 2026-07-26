@@ -80,6 +80,16 @@ When called without a target name, the command lists all configured targets and 
 
 `zip` is mutually exclusive with `host` and `dest`. The zip destination directory must exist; the command aborts if the archive already exists (remove it manually to re-ship).
 
+**Excludes and includes**
+
+Ship applies filters in three layers, so some files and directories are excluded by default:
+
+1. **Default excludes** — always applied, even with no config: `.DS_Store`, `Thumbs.db`, `.git*`, `node_modules`, `src`, `package.json`, `package-lock.json`, `haptiq.config.js`, `.env*`, `*.map`. By default, these don't land on a server or in an archive.
+2. **`ship.exclude`** — project-specific paths, *added on top* of the defaults.
+3. **`ship.include`** — an escape hatch that **wins over both** excludes. Use it to explicitly include something that would otherwise be dropped (e.g. `package.json` for a host that runs `npm install`, or `*.map` for Sentry). To re-include a whole excluded directory, use a trailing `/***` (e.g. `node_modules/***`).
+
+Ordering matches rsync's native first-match-wins behaviour. Run `kit ship --verbose` to print the resolved default / config / include layers before syncing.
+
 ---
 
 ### `kit version [bump]`

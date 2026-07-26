@@ -16,6 +16,33 @@ import { buildJS } from './js.js';
 
 
 /**
+ * Always-applied exclude baseline — files/dirs that no project usually ships
+ * to a destination or into a release archive.
+ *
+ * Filters are applied in this order (rsync first-match-wins), so a later layer
+ * can't silently disable an earlier one:
+ *   1. `ship.include`  — checked first, so it wins over every exclude below
+ *   2. `ship.exclude`  — the user's project-specific excludes
+ *   3. DEFAULT_EXCLUDE  — this baseline, checked last
+ *
+ * The zip path can't express rule ordering, so it emulates the same outcome by
+ * union (glob everything minus excludes, plus a separate glob of the includes).
+ */
+const DEFAULT_EXCLUDE = [
+	'.DS_Store',        // macOS folder metadata
+	'Thumbs.db',        // Windows thumbnail cache
+	'.git*',            // .git, .gitignore, .gitattributes, .github/, …
+	'node_modules',     // dependencies
+	'src',              // uncompiled source folder
+	'package.json',     // package manifest
+	'package-lock.json',// lockfile (companion to package.json)
+	'haptiq.config.js', // this tool's own config
+	'.env*',            // secrets — .env, .env.local, .env.production, …
+	'*.map',            // source maps
+];
+
+
+/**
  * Main ship function — builds assets then rsyncs for each target
  *
  * @param {Object} config - Configuration object from haptiq.config.js
@@ -28,10 +55,20 @@ async function ship(config, verbose, options = {}) {
 
 	const shipConfig = config.ship;
 
-	const { targets = {}, src = './', exclude, delete: deleteRemoved = false } = shipConfig ?? {};
+	const { targets = {}, src = './', exclude: userExclude = [], include = [], delete: deleteRemoved = false } = shipConfig ?? {};
 
-	if (!exclude || exclude.length === 0) {
-		console.warn('⚠️  No ship.exclude configured — everything in src will be synced including node_modules. Add an exclude list to haptiq.config.js to filter unwanted files.');
+	// Three-layer filter: safety defaults, user excludes on top, then includes
+	// (passed to rsync/glob first) win over both.
+	const exclude = [...DEFAULT_EXCLUDE, ...userExclude];
+
+	if (verbose) {
+		console.log(`🔒 Default excludes: ${DEFAULT_EXCLUDE.join(', ')}`);
+		if (userExclude.length > 0) {
+			console.log(`➕ Config excludes:  ${userExclude.join(', ')}`);
+		}
+		if (include.length > 0) {
+			console.log(`✅ Includes (win over excludes): ${include.join(', ')}`);
+		}
 	}
 
 	const configuredTargetNames = Object.keys(targets);
@@ -59,9 +96,9 @@ async function ship(config, verbose, options = {}) {
 		await buildJS(config, verbose, { dev });
 
 		if (targetConfig.zip) {
-			await zipSingleTarget(name, targetConfig, { src, exclude }, verbose);
+			await zipSingleTarget(name, targetConfig, { src, exclude, include }, verbose);
 		} else {
-			await shipSingleTarget(name, targetConfig, { src, exclude, deleteRemoved }, verbose);
+			await shipSingleTarget(name, targetConfig, { src, exclude, include, deleteRemoved }, verbose);
 		}
 
 		console.log(`✅ Shipped to [${name}].`);
@@ -75,13 +112,13 @@ async function ship(config, verbose, options = {}) {
  *
  * @param {string} name - Target name (for log messages)
  * @param {{ zip: string }} targetConfig - Target settings
- * @param {{ src: string, exclude: string[] }} shipConfig - Shared settings
+ * @param {{ src: string, exclude: string[], include: string[] }} shipConfig - Shared settings
  * @param {boolean} verbose - List each file added to the archive
  * @returns {Promise<void>}
  */
 async function zipSingleTarget(name, targetConfig, shipConfig, verbose) {
 	const { zip: zipPathTemplate } = targetConfig;
-	const { src = './', exclude = [] } = shipConfig;
+	const { src = './', exclude = [], include = [] } = shipConfig;
 
 	const projectRoot = process.cwd();
 	const projectName = path.basename(projectRoot);
@@ -117,12 +154,21 @@ async function zipSingleTarget(name, targetConfig, shipConfig, verbose) {
 
 	console.log(`📦 Packing [${name}] → ${resolvedZipPath}`);
 
-	const files = await glob('**', {
+	// glob's `ignore` has no re-inclusion ordering like rsync's --include, so
+	// implement `include` by union: the excluded set plus a separate glob of the
+	// included patterns, merged. This keeps behavior consistent with rsync.
+	const excludedFiles = await glob('**', {
 		cwd: resolvedSrc,
 		dot: true,
 		nodir: true,
 		ignore: globIgnore,
 	});
+
+	const includedFiles = include.length > 0
+		? await glob(include, { cwd: resolvedSrc, dot: true, nodir: true })
+		: [];
+
+	const files = [...new Set([...excludedFiles, ...includedFiles])];
 
 	const zipData = {};
 	for (const file of files) {
@@ -142,13 +188,13 @@ async function zipSingleTarget(name, targetConfig, shipConfig, verbose) {
  *
  * @param {string} name - Target name (for error messages)
  * @param {{ dest?: string, host?: string, dev?: boolean }} targetConfig - Target settings. `dest` is required for remote targets; local targets derive it automatically.
- * @param {{ src: string, exclude: string[], deleteRemoved: boolean }} shipConfig - Shared settings
+ * @param {{ src: string, exclude: string[], include: string[], deleteRemoved: boolean }} shipConfig - Shared settings
  * @param {boolean} verbose - Stream rsync output to console
  * @returns {Promise<void>}
  */
 async function shipSingleTarget(name, targetConfig, shipConfig, verbose) {
 	const { dest, host } = targetConfig;
-	const { src = './', exclude = [], deleteRemoved = false } = shipConfig;
+	const { src = './', exclude = [], include = [], deleteRemoved = false } = shipConfig;
 
 	let destination;
 
@@ -181,13 +227,17 @@ async function shipSingleTarget(name, targetConfig, shipConfig, verbose) {
 
 	const normalizedSrc = src.endsWith('/') ? src : `${src}/`;
 
+	// Includes must precede excludes: rsync applies filter rules first-match-wins,
+	// so an --include emitted before its matching --exclude re-includes the file.
+	const includeArgs = include.flatMap(i => ['--include', i]);
 	const excludeArgs = exclude.flatMap(e => ['--exclude', e]);
+	const filterArgs = [...includeArgs, ...excludeArgs];
 	const deleteArgs = deleteRemoved ? ['--delete', '--delete-excluded'] : [];
 
 	const args = [
 		'-az',
 		...(verbose ? ['-v'] : []),
-		...excludeArgs,
+		...filterArgs,
 		...deleteArgs,
 		normalizedSrc,
 		destination,
@@ -196,7 +246,7 @@ async function shipSingleTarget(name, targetConfig, shipConfig, verbose) {
 	console.log(`🚀 Shipping [${name}] → ${destination}`);
 
 	if (deleteRemoved) {
-		const dryRunArgs = ['-azv', '-n', ...excludeArgs, ...deleteArgs, normalizedSrc, destination];
+		const dryRunArgs = ['-azv', '-n', ...filterArgs, ...deleteArgs, normalizedSrc, destination];
 		const deletions = await rsyncDryRun(dryRunArgs);
 		if (deletions.length > 0) {
 			await confirmDeletion(deletions, destination);

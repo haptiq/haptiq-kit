@@ -109,20 +109,19 @@ module.exports = {
 		// Source directory to sync (default: './')
 		src: './',
 
-		// Files and directories to exclude from the sync
+		// Things like .DS_Store, .git*, node_modules are excluded by default,
+		// even when no exclude is defined in here.
 		exclude: [
-			'.DS_Store',
-			'.git*',
-			'node_modules',
-			'scss',
-			'src',
-			'haptiq.config.js',
-			'package.json',
-			'package-lock.json',
-			// Source maps: remove this line if you use an error monitoring tool
-			// (e.g. Sentry) that needs .map files to decode production stack traces
-			'*.map',
+			'scss',        // extra uncompiled-source folder (src is already default)
+			'*.psd',       // design assets
 		],
+
+		// If needed, excluded files can manually be re-included by project.
+		// Run --verbose to see the resolved default / config / include layers.
+		// include: [
+		//   'package.json',
+		//   '*.map',
+		// ],
 
 		// Remove remote files that no longer exist locally (rsync --delete)
 		delete: true,
