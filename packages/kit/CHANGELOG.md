@@ -1,5 +1,11 @@
 # @haptiq/kit
 
+## 0.13.0
+
+### Minor Changes
+
+- 8a1b693: Support a single-file `src` in ship command, and enforce the inside-project-root guard on zip targets too.
+
 ## 0.12.0
 
 ### Minor Changes
