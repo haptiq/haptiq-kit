@@ -6,7 +6,7 @@
  * under the `ship` key.
  */
 import { spawn } from 'child_process';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, statSync, writeFileSync } from 'fs';
 import readline from 'readline';
 import path from 'path';
 import { glob } from 'glob';
@@ -107,13 +107,14 @@ async function ship(config, verbose, options = {}) {
 
 
 /**
- * Resolve `ship.src` to an absolute path and enforce that it stays inside the
- * project root. Shared by the zip and rsync paths so both reject the same
- * out-of-tree paths (e.g. a typo'd `../` that would otherwise ship files from a
- * sibling directory).
+ * Resolve `ship.src` to an absolute path, enforce that it stays inside the
+ * project root, and report whether it points at a single file or a directory.
+ * Shared by the zip and rsync paths so both reject the same out-of-tree paths
+ * (e.g. a typo'd `../` that would otherwise ship files from a sibling directory)
+ * and agree on the file-vs-directory distinction.
  *
  * @param {string} src - The configured `ship.src` (relative or absolute)
- * @returns {string} The resolved absolute path
+ * @returns {{ resolvedSrc: string, isFile: boolean }}
  */
 function resolveSrc(src) {
 	const projectRoot = process.cwd();
@@ -121,7 +122,10 @@ function resolveSrc(src) {
 	if (resolvedSrc !== projectRoot && !resolvedSrc.startsWith(projectRoot + path.sep)) {
 		throw new Error(`ship.src must be inside the project root. Got: ${resolvedSrc}`);
 	}
-	return resolvedSrc;
+	if (!existsSync(resolvedSrc)) {
+		throw new Error(`ship.src does not exist: ${resolvedSrc}`);
+	}
+	return { resolvedSrc, isFile: statSync(resolvedSrc).isFile() };
 }
 
 
@@ -164,37 +168,49 @@ async function zipSingleTarget(name, targetConfig, shipConfig, verbose) {
 		throw new Error(`Zip archive already exists: ${resolvedZipPath}\nRemove it manually before shipping to avoid accidental overwrites.`);
 	}
 
-	const resolvedSrc = resolveSrc(src);
-
-	const globIgnore = exclude.flatMap(e => {
-		const stripped = e.replace(/\/$/, '');
-		return [stripped, `${stripped}/**`];
-	});
+	const { resolvedSrc, isFile } = resolveSrc(src);
 
 	console.log(`📦 Packing [${name}] → ${resolvedZipPath}`);
 
-	// glob's `ignore` has no re-inclusion ordering like rsync's --include, so
-	// implement `include` by union: the excluded set plus a separate glob of the
-	// included patterns, merged. This keeps behavior consistent with rsync.
-	const excludedFiles = await glob('**', {
-		cwd: resolvedSrc,
-		dot: true,
-		nodir: true,
-		ignore: globIgnore,
-	});
+	// A single-file src is packed verbatim (it was named explicitly, so
+	// include/exclude filtering doesn't apply); a directory is globbed with the
+	// filters. `baseDir` is the folder the file paths are read/zipped relative to.
+	let baseDir;
+	let files;
+	if (isFile) {
+		baseDir = path.dirname(resolvedSrc);
+		files = [path.basename(resolvedSrc)];
+	} else {
+		baseDir = resolvedSrc;
 
-	const includedFiles = include.length > 0
-		? await glob(include, { cwd: resolvedSrc, dot: true, nodir: true })
-		: [];
+		const globIgnore = exclude.flatMap(e => {
+			const stripped = e.replace(/\/$/, '');
+			return [stripped, `${stripped}/**`];
+		});
 
-	const files = [...new Set([...excludedFiles, ...includedFiles])];
+		// glob's `ignore` has no re-inclusion ordering like rsync's --include, so
+		// implement `include` by union: the excluded set plus a separate glob of the
+		// included patterns, merged. This keeps behavior consistent with rsync.
+		const excludedFiles = await glob('**', {
+			cwd: baseDir,
+			dot: true,
+			nodir: true,
+			ignore: globIgnore,
+		});
+
+		const includedFiles = include.length > 0
+			? await glob(include, { cwd: baseDir, dot: true, nodir: true })
+			: [];
+
+		files = [...new Set([...excludedFiles, ...includedFiles])];
+	}
 
 	const zipData = {};
 	for (const file of files) {
 		if (verbose) {
 			process.stdout.write(`  ${file}\n`);
 		}
-		zipData[`${projectName}/${file}`] = readFileSync(path.join(resolvedSrc, file));
+		zipData[`${projectName}/${file}`] = readFileSync(path.join(baseDir, file));
 	}
 
 	const zipped = zipSync(zipData);
@@ -238,33 +254,41 @@ async function shipSingleTarget(name, targetConfig, shipConfig, verbose) {
 		destination = localDest;
 	}
 
-	resolveSrc(src);
+	const { resolvedSrc, isFile } = resolveSrc(src);
 
-	const normalizedSrc = src.endsWith('/') ? src : `${src}/`;
+	// Directory src: sync its *contents* (trailing slash on the source).
+	// Single file: copy the file itself, and give the destination a trailing
+	// slash so rsync treats it as a folder to drop the file into (creating it
+	// if needed) rather than renaming the file to the destination.
+	const srcArg = isFile ? resolvedSrc : (src.endsWith('/') ? src : `${src}/`);
+	const destArg = isFile && !destination.endsWith('/') ? `${destination}/` : destination;
 
+	// Include/exclude are directory-tree filters and --delete only applies to a
+	// synced tree — both are meaningless for a single named file (and a default
+	// exclude could even silently drop it), so skip them when src is a file.
 	// Includes must precede excludes: rsync applies filter rules first-match-wins,
 	// so an --include emitted before its matching --exclude re-includes the file.
 	const includeArgs = include.flatMap(i => ['--include', i]);
 	const excludeArgs = exclude.flatMap(e => ['--exclude', e]);
-	const filterArgs = [...includeArgs, ...excludeArgs];
-	const deleteArgs = deleteRemoved ? ['--delete', '--delete-excluded'] : [];
+	const filterArgs = isFile ? [] : [...includeArgs, ...excludeArgs];
+	const deleteArgs = (!isFile && deleteRemoved) ? ['--delete', '--delete-excluded'] : [];
 
 	const args = [
 		'-az',
 		...(verbose ? ['-v'] : []),
 		...filterArgs,
 		...deleteArgs,
-		normalizedSrc,
-		destination,
+		srcArg,
+		destArg,
 	];
 
-	console.log(`🚀 Shipping [${name}] → ${destination}`);
+	console.log(`🚀 Shipping [${name}] → ${destArg}`);
 
-	if (deleteRemoved) {
-		const dryRunArgs = ['-azv', '-n', ...filterArgs, ...deleteArgs, normalizedSrc, destination];
+	if (!isFile && deleteRemoved) {
+		const dryRunArgs = ['-azv', '-n', ...filterArgs, ...deleteArgs, srcArg, destArg];
 		const deletions = await rsyncDryRun(dryRunArgs);
 		if (deletions.length > 0) {
-			await confirmDeletion(deletions, destination);
+			await confirmDeletion(deletions, destArg);
 		}
 	}
 
