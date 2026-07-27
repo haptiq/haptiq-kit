@@ -146,6 +146,9 @@ async function zipSingleTarget(name, targetConfig, shipConfig, verbose) {
 	}
 
 	const resolvedSrc = path.resolve(projectRoot, src);
+	if (resolvedSrc !== projectRoot && !resolvedSrc.startsWith(projectRoot + path.sep)) {
+		throw new Error(`ship.src must be inside the project root. Got: ${resolvedSrc}`);
+	}
 
 	const globIgnore = exclude.flatMap(e => {
 		const stripped = e.replace(/\/$/, '');
