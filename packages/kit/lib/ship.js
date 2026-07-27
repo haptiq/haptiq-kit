@@ -107,6 +107,25 @@ async function ship(config, verbose, options = {}) {
 
 
 /**
+ * Resolve `ship.src` to an absolute path and enforce that it stays inside the
+ * project root. Shared by the zip and rsync paths so both reject the same
+ * out-of-tree paths (e.g. a typo'd `../` that would otherwise ship files from a
+ * sibling directory).
+ *
+ * @param {string} src - The configured `ship.src` (relative or absolute)
+ * @returns {string} The resolved absolute path
+ */
+function resolveSrc(src) {
+	const projectRoot = process.cwd();
+	const resolvedSrc = path.resolve(projectRoot, src);
+	if (resolvedSrc !== projectRoot && !resolvedSrc.startsWith(projectRoot + path.sep)) {
+		throw new Error(`ship.src must be inside the project root. Got: ${resolvedSrc}`);
+	}
+	return resolvedSrc;
+}
+
+
+/**
  * Zip a single target — builds a zip archive at the configured path.
  * Aborts if the destination directory does not exist or the zip file already exists.
  *
@@ -145,10 +164,7 @@ async function zipSingleTarget(name, targetConfig, shipConfig, verbose) {
 		throw new Error(`Zip archive already exists: ${resolvedZipPath}\nRemove it manually before shipping to avoid accidental overwrites.`);
 	}
 
-	const resolvedSrc = path.resolve(projectRoot, src);
-	if (resolvedSrc !== projectRoot && !resolvedSrc.startsWith(projectRoot + path.sep)) {
-		throw new Error(`ship.src must be inside the project root. Got: ${resolvedSrc}`);
-	}
+	const resolvedSrc = resolveSrc(src);
 
 	const globIgnore = exclude.flatMap(e => {
 		const stripped = e.replace(/\/$/, '');
@@ -222,11 +238,7 @@ async function shipSingleTarget(name, targetConfig, shipConfig, verbose) {
 		destination = localDest;
 	}
 
-	const projectRoot = process.cwd();
-	const resolvedSrc = path.resolve(projectRoot, src);
-	if (resolvedSrc !== projectRoot && !resolvedSrc.startsWith(projectRoot + path.sep)) {
-		throw new Error(`ship.src must be inside the project root. Got: ${resolvedSrc}`);
-	}
+	resolveSrc(src);
 
 	const normalizedSrc = src.endsWith('/') ? src : `${src}/`;
 
