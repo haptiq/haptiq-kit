@@ -1,5 +1,11 @@
 # @haptiq/kit
 
+## 0.14.0
+
+### Minor Changes
+
+- Add watch mode to the css and js commands, bare `kit` runs both and then watches
+
 ## 0.13.0
 
 ### Minor Changes
