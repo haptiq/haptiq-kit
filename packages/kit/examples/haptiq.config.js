@@ -21,6 +21,10 @@ module.exports = {
 		// Directory watched by `kit css --watch` and bare `kit` (default: 'src')
 		// Watched recursively; any .scss/.sass/.css change re-runs the CSS build
 		// exactly as it was invoked (same --only/--skip/--dev).
+		// May be an array when sources live in several trees:
+		//   watch: ['assets/scss', 'assets/blocks'],
+		// NOTE: dest must not be inside src or watch — kit errors out, because the
+		// build would otherwise read its own output and the watcher would loop.
 		watch: 'src',
 
 		// LightningCSS optimization options

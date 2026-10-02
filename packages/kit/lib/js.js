@@ -7,6 +7,11 @@ import fs from 'fs';
 import path from 'path';
 import { globSync } from 'glob';
 import { minify } from 'terser';
+import { globInputRoots, assertOutputOutsideInputs } from './paths.js';
+
+
+// Destination used when a js config does not set one
+const DEFAULT_JS_DEST = 'js/bundle.js';
 
 
 /**
@@ -94,7 +99,7 @@ async function processMultipleConfigs(configs, verbose, options = {}) {
  * @returns {Promise<number>} Number of files processed
  */
 async function processSingleConfig(jsConfig, verbose, dev = false) {
-	const dest = jsConfig.dest || 'js/bundle.js';
+	const dest = jsConfig.dest || DEFAULT_JS_DEST;
 	let combine = jsConfig.combine;
 	if (combine === undefined) {
 		combine = !dest.endsWith('/') && path.extname(dest) !== '';
@@ -133,6 +138,10 @@ async function processSingleConfig(jsConfig, verbose, dev = false) {
 	}
 
 	mergedConfig.dest = path.relative(projectRoot, safeDest);
+
+	// Output inside the source tree makes the bundle swallow its own previous
+	// output, growing on every build. Checked before anything is written.
+	assertOutputOutsideInputs(globInputRoots(mergedConfig.src), [mergedConfig.dest], 'js', 'src');
 
 	if (verbose) {
 		console.log('🪄 JavaScript processing begins.');
@@ -266,4 +275,4 @@ function getGlobBase(pattern) {
 }
 
 
-export { buildJS };
+export { buildJS, DEFAULT_JS_DEST };

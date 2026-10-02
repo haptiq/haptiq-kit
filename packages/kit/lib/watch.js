@@ -24,8 +24,8 @@ const SPINNER_INTERVAL_MS = 100;
 /**
  * Start watching and keep the process alive until interrupted
  *
- * Each watcher is `{ dir, extensions, run, label }`:
- * - `dir`        directory to watch (recursive, relative to the project root)
+ * Each watcher is `{ dirs, extensions, run, label }`:
+ * - `dirs`       directories to watch (recursive, relative to the project root)
  * - `extensions` file extensions that should trigger `run` (e.g. ['.scss'])
  * - `run`        async function performing the rebuild
  * - `label`      name used in log output (e.g. 'CSS')
@@ -33,7 +33,7 @@ const SPINNER_INTERVAL_MS = 100;
  * A failing rebuild prints its error and leaves the watcher running, so a
  * syntax error mid-edit never drops you back to the shell.
  *
- * @param {Array<{dir: string, extensions: string[], run: Function, label: string}>} watchers - Watcher descriptors
+ * @param {Array<{dirs: string[], extensions: string[], run: Function, label: string}>} watchers - Watcher descriptors
  * @param {{ verbose?: boolean }} options - Output options
  * @returns {Promise<void>} Resolves once the watchers have been closed
  */
@@ -47,10 +47,16 @@ async function startWatch(watchers, options = {}) {
 	const spinner = createSpinner(process.stdout.isTTY === true);
 
 	for (const watcher of watchers) {
-		const dir = resolveWatchDir(watcher.dir, projectRoot, watcher.label);
+		const resolved = watcher.dirs.map(dir => resolveWatchDir(dir, projectRoot, watcher.label));
+		const existing = resolved.filter(dir => fs.existsSync(dir));
 
-		if (!fs.existsSync(dir)) {
-			console.warn(`⚠️  [${watcher.label}] watch directory "${watcher.dir}" does not exist — not watching`);
+		for (const [i, dir] of resolved.entries()) {
+			if (!fs.existsSync(dir)) {
+				console.warn(`⚠️  [${watcher.label}] watch directory "${watcher.dirs[i]}" does not exist — not watching`);
+			}
+		}
+
+		if (existing.length === 0) {
 			continue;
 		}
 
@@ -58,7 +64,7 @@ async function startWatch(watchers, options = {}) {
 
 		// chokidar watches directories recursively by default, including
 		// subfolders created after startup — events are filtered by extension here.
-		const instance = watch(dir, { ignoreInitial: true, persistent: true });
+		const instance = watch(existing, { ignoreInitial: true, persistent: true });
 
 		instance.on('all', (event, changedPath) => {
 			if (!RELEVANT_EVENTS.has(event)) return;
@@ -72,7 +78,8 @@ async function startWatch(watchers, options = {}) {
 
 		instances.push(instance);
 
-		console.log(`👀 Watching ${path.relative(projectRoot, dir) || '.'} for ${watcher.label} changes`);
+		const shown = existing.map(dir => path.relative(projectRoot, dir) || '.').join(', ');
+		console.log(`👀 Watching ${shown} for ${watcher.label} changes`);
 	}
 
 	if (instances.length === 0) {

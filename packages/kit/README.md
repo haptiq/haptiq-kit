@@ -89,8 +89,9 @@ which has no output file of its own) and a changed member of a JS bundle both tr
 rebuild.
 
 **What is watched:** the `src/` directory, recursively — including subfolders created after startup.
-Override it per pipeline with `css.watch` / `js.watch` in `haptiq.config.js`. Events are filtered by
-extension: `.scss`, `.sass` and `.css` trigger the CSS build, `.js` triggers the JS build.
+Override it per pipeline with `css.watch` / `js.watch` in `haptiq.config.js`, as a single directory or
+an array of them. Events are filtered by extension: `.scss`, `.sass` and `.css` trigger the CSS build,
+`.js` triggers the JS build.
 
 ```js
 // haptiq.config.js
@@ -98,7 +99,20 @@ export default {
   css: { src: 'src/scss/**/*.scss', dest: 'assets/css', watch: 'src/scss' },
   js:  { src: 'src/js/**/*.js',     dest: 'assets/js/bundle.js', watch: 'src/js' },
 }
+
+// Several source trees:
+export default {
+  css: { src: 'assets/{scss,blocks}/**/*.scss', dest: 'assets/css',
+         watch: ['assets/scss', 'assets/blocks'] },
+}
 ```
+
+**Output must live outside the input tree.** A `dest` inside the `src` glob or inside a watch
+directory is rejected with an error, because it breaks silently in three ways: the build starts
+reading its own output (so edits to the real sources stop having any effect), the watcher rebuilds
+forever, and `kit ship` excludes `src/` by default so the output would never deploy. Point `watch` at
+the source directory rather than its parent — `assets/scss`, not `assets` — and keep `dest` beside the
+source tree rather than inside it.
 
 **Notes**
 

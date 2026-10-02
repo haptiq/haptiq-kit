@@ -21,11 +21,12 @@ import { Command } from 'commander';
 import { pathToFileURL } from 'url';
 import path from 'path';
 import packageJson from '../package.json' with { type: 'json' };
-import { buildCSS } from '../lib/css.js';
-import { buildJS } from '../lib/js.js';
+import { buildCSS, DEFAULT_CSS_DEST } from '../lib/css.js';
+import { buildJS, DEFAULT_JS_DEST } from '../lib/js.js';
 import { ship } from '../lib/ship.js';
 import { bumpVersion } from '../lib/version.js';
 import { startWatch } from '../lib/watch.js';
+import { assertOutputOutsideInputs } from '../lib/paths.js';
 
 const { version } = packageJson;
 
@@ -71,8 +72,12 @@ async function loadConfig(verbose = false) {
 				throw new Error('css.dest must be a string');
 			}
 
-			if (config.css.watch !== undefined && (typeof config.css.watch !== 'string' || config.css.watch.trim() === '')) {
-				throw new Error('css.watch must be a non-empty string');
+			if (config.css.watch !== undefined) {
+				const dirs = Array.isArray(config.css.watch) ? config.css.watch : [config.css.watch];
+
+				if (dirs.length === 0 || dirs.some(dir => typeof dir !== 'string' || dir.trim() === '')) {
+					throw new Error('css.watch must be a non-empty string, or an array of non-empty strings');
+				}
 			}
 		}
 
@@ -91,8 +96,12 @@ async function loadConfig(verbose = false) {
 				throw new Error('js.dest must be a string');
 			}
 
-			if (config.js.watch !== undefined && (typeof config.js.watch !== 'string' || config.js.watch.trim() === '')) {
-				throw new Error('js.watch must be a non-empty string');
+			if (config.js.watch !== undefined) {
+				const dirs = Array.isArray(config.js.watch) ? config.js.watch : [config.js.watch];
+
+				if (dirs.length === 0 || dirs.some(dir => typeof dir !== 'string' || dir.trim() === '')) {
+					throw new Error('js.watch must be a non-empty string, or an array of non-empty strings');
+				}
 			}
 		}
 
@@ -207,41 +216,56 @@ function createCommandHandler(taskName, taskFunction) {
 
 
 /**
- * Describe the CSS watcher
+ * Every destination a pipeline writes to
+ *
+ * Covers the single-config and named-configs shapes, filling in the pipeline's
+ * default when a config sets no dest — needed to check them against the watch
+ * directories before any watcher starts.
+ *
+ * @param {Object} pipelineConfig - config.css or config.js
+ * @param {string} defaultDest - Destination used when a config sets none
+ * @returns {string[]} Configured destinations
+ */
+function pipelineDests(pipelineConfig = {}, defaultDest) {
+	const configs = pipelineConfig?.configs
+		? Object.values(pipelineConfig.configs)
+		: [pipelineConfig];
+
+	return configs.map(entry => entry?.dest ?? defaultDest);
+}
+
+
+/**
+ * Describe a pipeline's watcher
  *
  * The rebuild re-runs the very same invocation that started the watch, so
  * `--only` / `--skip` / `--dev` keep applying and partials (which map to no
  * output of their own) correctly trigger a full rebuild.
  *
- * @param {Object} config - Loaded configuration object
- * @param {boolean} verbose - Show detailed output on each rebuild
- * @param {{ only?: string, skip?: string, dev?: boolean }} runOptions - Build options to reuse
- * @returns {Object} Watcher descriptor for startWatch
- */
-function cssWatcher(config, verbose, runOptions) {
-	return {
-		label: 'CSS',
-		dir: config.css?.watch ?? DEFAULT_WATCH_DIR,
-		extensions: ['.scss', '.sass', '.css'],
-		run: () => buildCSS(config, verbose, runOptions)
-	};
-}
-
-
-/**
- * Describe the JavaScript watcher
+ * Output inside a watched directory would make every rebuild trigger another,
+ * so that is rejected here, before the first watcher starts.
  *
+ * @param {'css'|'js'} pipeline - Which pipeline to watch
  * @param {Object} config - Loaded configuration object
  * @param {boolean} verbose - Show detailed output on each rebuild
  * @param {{ only?: string, skip?: string, dev?: boolean }} runOptions - Build options to reuse
  * @returns {Object} Watcher descriptor for startWatch
  */
-function jsWatcher(config, verbose, runOptions) {
+function pipelineWatcher(pipeline, config, verbose, runOptions) {
+	const spec = pipeline === 'css'
+		? { label: 'CSS', extensions: ['.scss', '.sass', '.css'], defaultDest: DEFAULT_CSS_DEST, build: buildCSS }
+		: { label: 'JavaScript', extensions: ['.js'], defaultDest: DEFAULT_JS_DEST, build: buildJS };
+
+	const configured = config[pipeline]?.watch ?? DEFAULT_WATCH_DIR;
+	const dirs = Array.isArray(configured) ? configured : [configured];
+
+	assertOutputOutsideInputs(dirs, pipelineDests(config[pipeline], spec.defaultDest), pipeline, 'watch');
+
 	return {
-		label: 'JavaScript',
-		dir: config.js?.watch ?? DEFAULT_WATCH_DIR,
-		extensions: ['.js'],
-		run: () => buildJS(config, verbose, runOptions)
+		label: spec.label,
+		dirs,
+		extensions: spec.extensions,
+		run: () => spec.build(config, verbose, runOptions)
 	};
 }
 
@@ -268,10 +292,14 @@ program
 	.option('--watch', 'Rebuild whenever a watched CSS source changes')
 	.action(createCommandHandler('CSS build', async (config, options) => {
 		const runOptions = { only: options.only, skip: options.skip, dev: options.dev };
+
+		// Built first so a bad watch target fails before anything is written
+		const watcher = options.watch ? pipelineWatcher('css', config, options.verbose, runOptions) : null;
+
 		await buildCSS(config, options.verbose, runOptions);
 
-		if (options.watch) {
-			await startWatch([cssWatcher(config, options.verbose, runOptions)], { verbose: options.verbose });
+		if (watcher) {
+			await startWatch([watcher], { verbose: options.verbose });
 		}
 	}));
 
@@ -285,10 +313,14 @@ program
 	.option('--watch', 'Rebuild whenever a watched JavaScript source changes')
 	.action(createCommandHandler('JavaScript build', async (config, options) => {
 		const runOptions = { only: options.only, skip: options.skip, dev: options.dev };
+
+		// Built first so a bad watch target fails before anything is written
+		const watcher = options.watch ? pipelineWatcher('js', config, options.verbose, runOptions) : null;
+
 		await buildJS(config, options.verbose, runOptions);
 
-		if (options.watch) {
-			await startWatch([jsWatcher(config, options.verbose, runOptions)], { verbose: options.verbose });
+		if (watcher) {
+			await startWatch([watcher], { verbose: options.verbose });
 		}
 	}));
 
@@ -314,13 +346,16 @@ program
 	.action(createCommandHandler('Build', async (config, options) => {
 		const runOptions = { dev: options.dev };
 
+		// Built first so a bad watch target fails before anything is written
+		const watchers = [
+			pipelineWatcher('css', config, options.verbose, runOptions),
+			pipelineWatcher('js', config, options.verbose, runOptions)
+		];
+
 		await buildCSS(config, options.verbose, runOptions);
 		await buildJS(config, options.verbose, runOptions);
 
-		await startWatch(
-			[cssWatcher(config, options.verbose, runOptions), jsWatcher(config, options.verbose, runOptions)],
-			{ verbose: options.verbose }
-		);
+		await startWatch(watchers, { verbose: options.verbose });
 	}));
 
 program.parse();

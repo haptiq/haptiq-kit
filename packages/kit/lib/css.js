@@ -11,6 +11,11 @@ import * as sass from 'sass';
 import { transform, browserslistToTargets } from 'lightningcss';
 import browserslist from 'browserslist';
 import haptiqBrowserslistConfig from '@haptiq/browserslist-config';
+import { globInputRoots, assertOutputOutsideInputs } from './paths.js';
+
+
+// Destination used when a css config does not set one
+const DEFAULT_CSS_DEST = 'css';
 
 
 /**
@@ -106,7 +111,7 @@ async function processSingleConfig(rawConfig, resolvedTargets, verbose, dev) {
 	};
 
 	const cssConfig = {
-		dest: 'css',
+		dest: DEFAULT_CSS_DEST,
 		...rawConfig,
 		lightning: {
 			...defaultLightningConfig,
@@ -144,6 +149,10 @@ async function processSingleConfig(rawConfig, resolvedTargets, verbose, dev) {
 	}
 
 	cssConfig.dest = path.relative(projectRoot, safeDest);
+
+	// Output inside the source tree makes the build read what it writes — the real
+	// sources then silently stop being compiled. Checked before anything is written.
+	assertOutputOutsideInputs(globInputRoots(cssConfig.src), [cssConfig.dest], 'css', 'src');
 
 	// A dest ending in a file extension (and not a trailing slash) targets one
 	// specific output file rather than a directory — used to rename output.
@@ -388,4 +397,4 @@ function getGlobBase(pattern) {
 }
 
 
-export { buildCSS };
+export { buildCSS, DEFAULT_CSS_DEST };
