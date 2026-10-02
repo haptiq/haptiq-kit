@@ -18,6 +18,11 @@ module.exports = {
 		// static base of src, so src/styles/blocks/hero.scss → assets/css/blocks/hero.css
 		dest: 'assets/css',
 
+		// Directory watched by `kit css --watch` and bare `kit` (default: 'src')
+		// Watched recursively; any .scss/.sass/.css change re-runs the CSS build
+		// exactly as it was invoked (same --only/--skip/--dev).
+		watch: 'src',
+
 		// LightningCSS optimization options
 		lightning: {
 			// Browser targets for autoprefixing
@@ -71,6 +76,10 @@ module.exports = {
 		// Output file path — .js extension triggers combine mode (default: 'js/bundle.js')
 		// Use a trailing slash or no extension to process files individually
 		dest: 'assets/js/bundle.js',
+
+		// Directory watched by `kit js --watch` and bare `kit` (default: 'src')
+		// Watched recursively; any .js change re-runs the JS build as invoked.
+		watch: 'src',
 
 		// Terser minification options (all optional)
 		terser: {

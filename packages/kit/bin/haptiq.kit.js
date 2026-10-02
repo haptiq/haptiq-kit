@@ -10,6 +10,8 @@
  *   npx @haptiq/kit css --verbose      # If installed as dependency
  *   npm run kit css --verbose         # If added to package.json scripts
  *   kit css --verbose                 # If installed globally
+ *   kit css --watch                   # Rebuild on every change
+ *   kit                               # Build css + js, then watch both
  *
  * Configuration:
  *   Optional haptiq.config.js file in project root
@@ -23,10 +25,14 @@ import { buildCSS } from '../lib/css.js';
 import { buildJS } from '../lib/js.js';
 import { ship } from '../lib/ship.js';
 import { bumpVersion } from '../lib/version.js';
+import { startWatch } from '../lib/watch.js';
 
 const { version } = packageJson;
 
 const program = new Command();
+
+// Watch root when neither css.watch nor js.watch is configured
+const DEFAULT_WATCH_DIR = 'src';
 
 
 /**
@@ -64,6 +70,10 @@ async function loadConfig(verbose = false) {
 			if (config.css.dest && typeof config.css.dest !== 'string') {
 				throw new Error('css.dest must be a string');
 			}
+
+			if (config.css.watch !== undefined && (typeof config.css.watch !== 'string' || config.css.watch.trim() === '')) {
+				throw new Error('css.watch must be a non-empty string');
+			}
 		}
 
 		// Validate js config structure if present
@@ -79,6 +89,10 @@ async function loadConfig(verbose = false) {
 
 			if (config.js.dest && typeof config.js.dest !== 'string') {
 				throw new Error('js.dest must be a string');
+			}
+
+			if (config.js.watch !== undefined && (typeof config.js.watch !== 'string' || config.js.watch.trim() === '')) {
+				throw new Error('js.watch must be a non-empty string');
 			}
 		}
 
@@ -192,10 +206,57 @@ function createCommandHandler(taskName, taskFunction) {
 }
 
 
+/**
+ * Describe the CSS watcher
+ *
+ * The rebuild re-runs the very same invocation that started the watch, so
+ * `--only` / `--skip` / `--dev` keep applying and partials (which map to no
+ * output of their own) correctly trigger a full rebuild.
+ *
+ * @param {Object} config - Loaded configuration object
+ * @param {boolean} verbose - Show detailed output on each rebuild
+ * @param {{ only?: string, skip?: string, dev?: boolean }} runOptions - Build options to reuse
+ * @returns {Object} Watcher descriptor for startWatch
+ */
+function cssWatcher(config, verbose, runOptions) {
+	return {
+		label: 'CSS',
+		dir: config.css?.watch ?? DEFAULT_WATCH_DIR,
+		extensions: ['.scss', '.sass', '.css'],
+		run: () => buildCSS(config, verbose, runOptions)
+	};
+}
+
+
+/**
+ * Describe the JavaScript watcher
+ *
+ * @param {Object} config - Loaded configuration object
+ * @param {boolean} verbose - Show detailed output on each rebuild
+ * @param {{ only?: string, skip?: string, dev?: boolean }} runOptions - Build options to reuse
+ * @returns {Object} Watcher descriptor for startWatch
+ */
+function jsWatcher(config, verbose, runOptions) {
+	return {
+		label: 'JavaScript',
+		dir: config.js?.watch ?? DEFAULT_WATCH_DIR,
+		extensions: ['.js'],
+		run: () => buildJS(config, verbose, runOptions)
+	};
+}
+
+
 program
 	.name('kit')
 	.description('Internal build tools for Haptiq projects.')
-	.version(version);
+	.version(version)
+	// Options for bare `kit` (see the program action at the bottom of this file)
+	.option('--dev', 'Build without minification')
+	.option('--verbose', 'Show detailed output')
+	// Keeps the program's own --dev/--verbose from swallowing the identically
+	// named options of the subcommands: with positional options, flags after a
+	// subcommand name always belong to that subcommand.
+	.enablePositionalOptions();
 
 program
 	.command('css')
@@ -204,8 +265,14 @@ program
 	.option('--verbose', 'Show detailed output for each file processed')
 	.option('--only <name>', 'Only run the named configuration')
 	.option('--skip <name>', 'Skip the named configuration')
+	.option('--watch', 'Rebuild whenever a watched CSS source changes')
 	.action(createCommandHandler('CSS build', async (config, options) => {
-		await buildCSS(config, options.verbose, { only: options.only, skip: options.skip, dev: options.dev });
+		const runOptions = { only: options.only, skip: options.skip, dev: options.dev };
+		await buildCSS(config, options.verbose, runOptions);
+
+		if (options.watch) {
+			await startWatch([cssWatcher(config, options.verbose, runOptions)], { verbose: options.verbose });
+		}
 	}));
 
 program
@@ -215,8 +282,14 @@ program
 	.option('--verbose', 'Show detailed output for bundling process')
 	.option('--only <name>', 'Only run the named configuration')
 	.option('--skip <name>', 'Skip the named configuration')
+	.option('--watch', 'Rebuild whenever a watched JavaScript source changes')
 	.action(createCommandHandler('JavaScript build', async (config, options) => {
-		await buildJS(config, options.verbose, { only: options.only, skip: options.skip, dev: options.dev });
+		const runOptions = { only: options.only, skip: options.skip, dev: options.dev };
+		await buildJS(config, options.verbose, runOptions);
+
+		if (options.watch) {
+			await startWatch([jsWatcher(config, options.verbose, runOptions)], { verbose: options.verbose });
+		}
 	}));
 
 program
@@ -234,6 +307,20 @@ program
 	.option('--force', 'Write an explicit version even if it is not valid semver')
 	.action(createCommandHandler('Version bump', async (config, options, bump) => {
 		await bumpVersion(config, bump ?? 'patch', options.force);
+	}));
+
+// Bare `kit` — build everything, then watch everything. `kit --help` still works.
+program
+	.action(createCommandHandler('Build', async (config, options) => {
+		const runOptions = { dev: options.dev };
+
+		await buildCSS(config, options.verbose, runOptions);
+		await buildJS(config, options.verbose, runOptions);
+
+		await startWatch(
+			[cssWatcher(config, options.verbose, runOptions), jsWatcher(config, options.verbose, runOptions)],
+			{ verbose: options.verbose }
+		);
 	}));
 
 program.parse();

@@ -19,12 +19,27 @@ Add a script to your `package.json`:
 {
   "scripts": {
     "build:css": "kit css",
-    "build:js": "kit js"
+    "build:js": "kit js",
+    "dev": "kit --dev"
   }
 }
 ```
 
 ## Commands
+
+### `kit`
+
+Called without a subcommand, `kit` builds CSS and JS once and then watches both for changes.
+
+```sh
+kit            # build css + js, then watch
+kit --dev      # same, unminified
+kit --verbose  # list every changed file before each rebuild
+```
+
+Press `Ctrl+C` to stop. See [Watch mode](#watch-mode) for what gets watched.
+
+---
 
 ### `kit css`
 
@@ -33,6 +48,9 @@ Compiles SCSS/Sass and CSS files using a two-stage pipeline: Sass → LightningC
 ```sh
 kit css
 kit css --verbose
+kit css --only <name>   # only run a named config (multi-config mode)
+kit css --skip <name>   # skip a named config (multi-config mode)
+kit css --watch         # rebuild on every change
 ```
 
 **Defaults:** reads `src/**/*.{scss,sass,css}`, writes to `css/`.
@@ -48,9 +66,51 @@ kit js
 kit js --verbose
 kit js --only <name>   # only run a named config (multi-config mode)
 kit js --skip <name>   # skip a named config (multi-config mode)
+kit js --watch         # rebuild on every change
 ```
 
 **Defaults:** reads `src/**/*.js`, writes to `js/bundle.js`.
+
+---
+
+### Watch mode
+
+`--watch` on `kit css` / `kit js`, and bare `kit`, keep the process running and rebuild on change.
+
+```sh
+kit css --watch
+kit js --dev --watch
+kit css --only blocks --watch
+```
+
+A rebuild re-runs **the exact invocation that started the watch**, so `--only`, `--skip`, `--dev` and
+`--verbose` keep applying to every rebuild. That also means a changed Sass partial (`_colors.scss`,
+which has no output file of its own) and a changed member of a JS bundle both trigger a correct full
+rebuild.
+
+**What is watched:** the `src/` directory, recursively — including subfolders created after startup.
+Override it per pipeline with `css.watch` / `js.watch` in `haptiq.config.js`. Events are filtered by
+extension: `.scss`, `.sass` and `.css` trigger the CSS build, `.js` triggers the JS build.
+
+```js
+// haptiq.config.js
+export default {
+  css: { src: 'src/scss/**/*.scss', dest: 'assets/css', watch: 'src/scss' },
+  js:  { src: 'src/js/**/*.js',     dest: 'assets/js/bundle.js', watch: 'src/js' },
+}
+```
+
+**Notes**
+
+- `--watch` rebuilds use the same settings of the initial build: `kit css --watch` rebuilds minified;
+  `kit css --dev --watch` rebuilds unminified and so forth.
+- Rapid saves are coalesced, and changes arriving mid-rebuild queue exactly one follow-up run.
+- A spinner animates while the watcher sits idle, so a quiet terminal still looks alive. It pauses for
+  the duration of each rebuild, and switches itself off when stdout is not a terminal — piping to a
+  log file or running in CI stays clean.
+- A failing rebuild (e.g. a Sass syntax error) prints the error and keeps watching — the next save is
+  usually the fix.
+- There is no live-reload layer; watch mode only rebuilds for now.
 
 ---
 
