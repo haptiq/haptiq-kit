@@ -1,5 +1,11 @@
 # @haptiq/kit
 
+## 0.15.0
+
+### Minor Changes
+
+- cf8d597: Reject a dest inside the `src` glob or a watch directory, and allow `watch` to take an array of directories.
+
 ## 0.14.0
 
 ### Minor Changes
